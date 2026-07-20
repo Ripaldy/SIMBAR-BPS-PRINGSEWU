@@ -66,8 +66,17 @@
         </div>
 
         {{-- Chart Canvas --}}
-        <div style="height:400px; width:100%; border:1px solid #f1f5f9; border-radius:12px; padding:20px; box-sizing:border-box; position:relative;">
-            <canvas id="mainChart"></canvas>
+        <div style="height:400px; width:100%; border:1px solid #f1f5f9; border-radius:12px; padding:20px; box-sizing:border-box; position:relative; display:flex; flex-direction:column;">
+            @if(request('chart_type', 'tren') === 'tren')
+            <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;" id="chart-filters">
+                <button type="button" onclick="filterChart('masuk')" id="btn-masuk" style="padding:6px 15px; border-radius:6px; border:1px solid #2ecc71; background:#2ecc71; color:white; font-weight:bold; cursor:pointer; font-size:13px; transition:0.2s;">Barang Masuk</button>
+                <button type="button" onclick="filterChart('keluar')" id="btn-keluar" style="padding:6px 15px; border-radius:6px; border:1px solid #e74c3c; background:#e74c3c; color:white; font-weight:bold; cursor:pointer; font-size:13px; transition:0.2s;">Barang Keluar</button>
+                <button type="button" onclick="filterChart('gabungan')" id="btn-gabungan" style="padding:6px 15px; border-radius:6px; border:1px solid #3498db; background:#3498db; color:white; font-weight:bold; cursor:pointer; font-size:13px; transition:0.2s;">Gabungan</button>
+            </div>
+            @endif
+            <div style="flex:1; position:relative; width:100%;">
+                <canvas id="mainChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -105,7 +114,6 @@
             </div>
         @endif
     </div>
-
 </div>
 @endsection
 
@@ -114,6 +122,7 @@
 <script>
 const chartType = '{{ request('chart_type', 'tren') }}';
 const dataTren     = @json($dataTren);
+const dataTrenMasuk = @json($dataTrenMasuk);
 const dataKategori = @json($dataKategori);
 const dataBarang   = @json($dataBarang);
 
@@ -122,28 +131,41 @@ const COLORS = ['#3498db','#e74c3c','#f1c40f','#2ecc71','#9b59b6','#34495e'];
 
 let chart;
 
-// Logika tampilan grafik tren barang keluar
+// Logika tampilan grafik tren barang
 if (chartType === 'tren') {
     chart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: dataTren.map(d => d.name),
-            datasets: [{
-                label: 'Total Barang Keluar',
-                data: dataTren.map(d => d.jumlah),
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52,152,219,0.1)',
-                borderWidth: 3,
-                pointRadius: 4,
-                pointBackgroundColor: '#3498db',
-                fill: true,
-                tension: 0.4,
-            }]
+            datasets: [
+                {
+                    label: 'Total Barang Keluar',
+                    data: dataTren.map(d => d.jumlah),
+                    borderColor: '#e74c3c', // Red for keluar
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    pointBackgroundColor: '#e74c3c',
+                    fill: true,
+                    tension: 0.4,
+                },
+                {
+                    label: 'Total Barang Masuk',
+                    data: dataTrenMasuk.map(d => d.jumlah),
+                    borderColor: '#2ecc71', // Green for masuk
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    pointBackgroundColor: '#2ecc71',
+                    fill: true,
+                    tension: 0.4,
+                }
+            ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { 
-                legend: { display: false }, 
+                legend: { display: false }, // Turn off legend as requested
                 tooltip: { 
                     backgroundColor: 'white', 
                     titleColor: '#1f4068', 
@@ -153,7 +175,7 @@ if (chartType === 'tren') {
                     cornerRadius: 8,
                     callbacks: {
                         label: function(context) {
-                            return 'Total Barang Keluar : ' + context.raw;
+                            return context.dataset.label + ' : ' + context.raw;
                         }
                     }
                 } 
@@ -161,6 +183,34 @@ if (chartType === 'tren') {
             scales: { x: { grid: { display: false } }, y: { grid: { color: '#e2e8f0' } } }
         }
     });
+
+    // Fungsi untuk memfilter grafik
+    window.filterChart = function(type) {
+        const btnMasuk = document.getElementById('btn-masuk');
+        const btnKeluar = document.getElementById('btn-keluar');
+        const btnGabungan = document.getElementById('btn-gabungan');
+
+        // Reset opacity
+        btnMasuk.style.opacity = '0.5';
+        btnKeluar.style.opacity = '0.5';
+        btnGabungan.style.opacity = '0.5';
+
+        // Tampilkan/Sembunyikan dataset dan ubah style tombol aktif
+        if(type === 'masuk') {
+            chart.setDatasetVisibility(0, false); // Sembunyikan keluar
+            chart.setDatasetVisibility(1, true);  // Tampilkan masuk
+            btnMasuk.style.opacity = '1';
+        } else if(type === 'keluar') {
+            chart.setDatasetVisibility(0, true);  // Tampilkan keluar
+            chart.setDatasetVisibility(1, false); // Sembunyikan masuk
+            btnKeluar.style.opacity = '1';
+        } else {
+            chart.setDatasetVisibility(0, true);  // Tampilkan keluar
+            chart.setDatasetVisibility(1, true);  // Tampilkan masuk
+            btnGabungan.style.opacity = '1';
+        }
+        chart.update();
+    }
 } else {
     // Logika tampilan grafik peringkat barang terlaris
     chart = new Chart(ctx, {

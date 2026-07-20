@@ -120,13 +120,18 @@
                             </div>
                             <select name="divisi" id="divisi-edit" class="form-input" style="display:none; width:100%; padding:12px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; color:#1f4068; background:white; outline:none; box-sizing:border-box; font-family:inherit;">
                                 <option value="">Pilih Tim / Divisi</option>
-                                <option value="Subbagian Umum" {{ $user->divisi == 'Subbagian Umum' ? 'selected' : '' }}>Subbagian Umum (Humas, SDM)</option>
-                                <option value="Seksi Statistik Sosial" {{ $user->divisi == 'Seksi Statistik Sosial' ? 'selected' : '' }}>Seksi Statistik Sosial</option>
-                                <option value="Seksi Statistik Produksi" {{ $user->divisi == 'Seksi Statistik Produksi' ? 'selected' : '' }}>Seksi Statistik Produksi</option>
-                                <option value="Seksi Statistik Distribusi" {{ $user->divisi == 'Seksi Statistik Distribusi' ? 'selected' : '' }}>Seksi Statistik Distribusi</option>
-                                <option value="Seksi Neraca Wilayah & Analisis" {{ $user->divisi == 'Seksi Neraca Wilayah & Analisis' ? 'selected' : '' }}>Seksi Neraca Wilayah & Analisis</option>
-                                <option value="Seksi IPDS" {{ $user->divisi == 'Seksi IPDS' ? 'selected' : '' }}>Seksi IPDS (IT & Data)</option>
-                                <option value="Lainnya" {{ $user->divisi == 'Lainnya' ? 'selected' : '' }}>Lainnya / Eksternal</option>
+                                @php
+                                    $divisiList = [
+                                        'Tim Subbagian Umum', 'Tim Statistik Sosial', 'Tim Statistik Produksi',
+                                        'Tim Statistik Distribusi', 'Tim Neraca Wilayah dan Analisis Statistik',
+                                        'Tim Pengolahan dan IT', 'Tim Diseminasi Statistik', 'Tim Reformasi Birokrasi',
+                                        'Tim Perencanaan dan Administrasi Keuangan', 'Tim Pembinaan dan Pelaksanaan Statistik Sektoral',
+                                        'Umum Kantor', 'Tim Humas', 'Tim Sensus Ekonomi 2026'
+                                    ];
+                                @endphp
+                                @foreach($divisiList as $div)
+                                    <option value="{{ $div }}" {{ $user->divisi == $div ? 'selected' : '' }}>{{ $div }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>

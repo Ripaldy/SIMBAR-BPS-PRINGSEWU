@@ -184,16 +184,28 @@
 
 <script>
     // ============ SIDEBAR TOGGLE (DESKTOP) ============
-    let sidebarOpen = true;
+    // Baca status terakhir dari localStorage, default adalah true (terbuka)
+    let sidebarOpen = localStorage.getItem('sidebarState') === 'closed' ? false : true;
 
-    function toggleSidebar() {
+    function applySidebarState() {
         const sidebar = document.getElementById('sidebar');
         const icon = document.getElementById('toggle-icon');
         const userInfo = document.getElementById('sidebar-user-info');
-        sidebarOpen = !sidebarOpen;
-        sidebar.classList.toggle('collapsed', !sidebarOpen);
+        
+        if (sidebar) sidebar.classList.toggle('collapsed', !sidebarOpen);
         if (icon) icon.setAttribute('data-lucide', sidebarOpen ? 'arrow-left' : 'arrow-right');
         if (userInfo) userInfo.style.display = sidebarOpen ? 'block' : 'none';
+    }
+
+    // Terapkan status saat halaman pertama dimuat
+    applySidebarState();
+
+    function toggleSidebar() {
+        sidebarOpen = !sidebarOpen;
+        // Simpan status terbaru ke localStorage
+        localStorage.setItem('sidebarState', sidebarOpen ? 'open' : 'closed');
+        
+        applySidebarState();
         lucide.createIcons();
     }
 

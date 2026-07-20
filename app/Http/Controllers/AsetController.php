@@ -127,7 +127,8 @@ class AsetController extends Controller
     public function uploadCsv(Request $request)
     {
         $request->validate([
-            'file_excel' => 'required|file'
+            // FIX: Tambahkan validasi MIME type yang sesungguhnya, bukan hanya ekstensi
+            'file_excel' => 'required|file|mimes:csv,xlsx,xls,plain,vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         ]);
 
         $file = $request->file('file_excel');

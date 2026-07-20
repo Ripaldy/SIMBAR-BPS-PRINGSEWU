@@ -86,7 +86,7 @@
             <h3 style="font-size:16px; margin:0 0 40px; font-weight:normal;">Sistem Informasi Manajemen Barang</h3>
             <h1 style="font-size:28px; margin:0 0 15px; font-weight:bold;">HALO, PEGAWAI!</h1>
             <p style="font-size:13px; margin:0 0 30px; line-height:1.6; opacity:0.9; max-width:280px;">
-                Belum memiliki akun? Daftarkan diri untuk mulai menggunakan layanan SIMBAR.
+                Belum memiliki akun? Silakan hubungi Administrator untuk pembuatan akun SIMBAR Anda.
             </p>
         </div>
 

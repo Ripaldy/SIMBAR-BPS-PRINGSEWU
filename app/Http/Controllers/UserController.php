@@ -59,7 +59,21 @@ class UserController extends Controller
             'nonaktif' => User::where('is_verified', false)->count(),
         ];
 
-        $divisiList = User::whereNotNull('divisi')->distinct()->pluck('divisi')->sort()->values();
+        $divisiList = [
+            'Tim Subbagian Umum',
+            'Tim Statistik Sosial',
+            'Tim Statistik Produksi',
+            'Tim Statistik Distribusi',
+            'Tim Neraca Wilayah dan Analisis Statistik',
+            'Tim Pengolahan dan IT',
+            'Tim Diseminasi Statistik',
+            'Tim Reformasi Birokrasi',
+            'Tim Perencanaan dan Administrasi Keuangan',
+            'Tim Pembinaan dan Pelaksanaan Statistik Sektoral',
+            'Umum Kantor',
+            'Tim Humas',
+            'Tim Sensus Ekonomi 2026'
+        ];
 
         return view('dashboard.pengguna', compact('pengguna', 'stats', 'divisiList', 'search', 'roleFilter', 'statusFilter', 'divisiFilter'));
     }
@@ -168,7 +182,8 @@ class UserController extends Controller
     public function uploadExcel(Request $request)
     {
         $request->validate([
-            'file_excel' => 'required|file',
+            // FIX: Tambahkan validasi MIME type yang sesungguhnya, bukan hanya ekstensi
+            'file_excel' => 'required|file|mimes:csv,xlsx,xls,plain,vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
 
         $file = $request->file('file_excel');

@@ -39,7 +39,8 @@ class ProfilController extends Controller
                 @unlink(public_path('uploads/' . $user->foto_profil));
             }
             $file = $request->file('foto_profil');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            // FIX: Gunakan hashName() agar nama file menjadi acak & aman
+            $filename = $file->hashName();
             $file->move(public_path('uploads'), $filename);
             $data['foto_profil'] = $filename;
         }

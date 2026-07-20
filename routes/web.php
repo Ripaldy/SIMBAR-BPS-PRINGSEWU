@@ -11,7 +11,7 @@ use App\Http\Controllers\OtomatisasiController;
 
 // ======================== AUTH ========================
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+Route::post('/login', [AuthController::class, 'login'])->name('login.submit')->middleware('throttle:login');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ======================== PROTECTED (Semua Role) ========================

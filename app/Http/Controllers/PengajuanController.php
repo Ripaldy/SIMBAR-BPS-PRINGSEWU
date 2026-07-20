@@ -190,12 +190,22 @@ class PengajuanController extends Controller
             ];
         })->values()->toArray();
 
-        // Daftar divisi unik dari seluruh pengguna di sistem (seperti di Manajemen Pengguna)
-        $divisiList = \App\Models\User::whereNotNull('divisi')
-            ->distinct()
-            ->pluck('divisi')
-            ->sort()
-            ->values();
+        // Daftar divisi
+        $divisiList = [
+            'Tim Subbagian Umum',
+            'Tim Statistik Sosial',
+            'Tim Statistik Produksi',
+            'Tim Statistik Distribusi',
+            'Tim Neraca Wilayah dan Analisis Statistik',
+            'Tim Pengolahan dan IT',
+            'Tim Diseminasi Statistik',
+            'Tim Reformasi Birokrasi',
+            'Tim Perencanaan dan Administrasi Keuangan',
+            'Tim Pembinaan dan Pelaksanaan Statistik Sektoral',
+            'Umum Kantor',
+            'Tim Humas',
+            'Tim Sensus Ekonomi 2026'
+        ];
 
         $availableYears = range(now()->year, 2024);
 
