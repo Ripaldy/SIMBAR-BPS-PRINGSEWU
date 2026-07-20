@@ -4,11 +4,6 @@
 @section('content')
 <div style="display:flex; flex-direction:column; gap:25px;">
 
-    <h2 class="page-title">
-        <i data-lucide="users" style="width:28px;height:28px;color:#2563eb;"></i>
-        Manajemen Pengguna
-    </h2>
-
     {{-- KARTU STATISTIK --}}
     <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:15px;">
         <div class="metric-card" style="padding:15px 20px;">
@@ -41,59 +36,43 @@
         </div>
     </div>
 
-    {{-- TOOLBAR (sesuai desain: search | Semua Divisi | Semua Role | Semua Status | Template | Upload CSV | + Manual) --}}
-    <div class="card">
-        <div class="toolbar" style="flex-wrap:wrap; gap:10px;">
-            {{-- Filter form (auto-submit) --}}
-            <form method="GET" action="{{ route('pengguna.index') }}" id="pengguna-filter-form" style="display:contents;">
-                {{-- Search --}}
-                <div class="search-bar" style="min-width:220px; flex:1;">
-                    <i data-lucide="search" class="search-icon" style="width:18px;height:18px;"></i>
-                    <input type="text" name="search" value="{{ $search }}"
-                           placeholder="Cari nama, email, atau jabatan..."
-                           onkeyup="debounceSubmitPengguna(this.form)">
-                </div>
-
-                {{-- Semua Divisi (urutan pertama sesuai gambar) --}}
-                <select name="divisi" class="form-select" style="width:auto; min-width:150px;"
-                        onchange="this.form.submit()">
-                    <option value="Semua" {{ $divisiFilter==='Semua' ? 'selected' : '' }}>Semua Divisi</option>
-                    @foreach($divisiList as $div)
-                        <option value="{{ $div }}" {{ $divisiFilter===$div ? 'selected' : '' }}>{{ $div }}</option>
-                    @endforeach
-                </select>
-
-                {{-- Semua Role --}}
-                <select name="role" class="form-select" style="width:auto; min-width:130px;"
-                        onchange="this.form.submit()">
-                    <option value="Semua" {{ $roleFilter==='Semua' ? 'selected' : '' }}>Semua Role</option>
-                    <option value="Admin" {{ $roleFilter==='Admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="Pegawai" {{ $roleFilter==='Pegawai' ? 'selected' : '' }}>Pegawai</option>
-                    <option value="Pemimpin" {{ $roleFilter==='Pemimpin' ? 'selected' : '' }}>Pemimpin</option>
-                </select>
-
-                {{-- Semua Status --}}
-                <select name="status" class="form-select" style="width:auto; min-width:140px;"
-                        onchange="this.form.submit()">
-                    <option value="Semua" {{ $statusFilter==='Semua' ? 'selected' : '' }}>Semua Status</option>
-                    <option value="Aktif" {{ $statusFilter==='Aktif' ? 'selected' : '' }}>Aktif</option>
-                    <option value="Nonaktif" {{ $statusFilter==='Nonaktif' ? 'selected' : '' }}>Nonaktif</option>
-                </select>
-            </form>
-
-            {{-- Action buttons (di luar form GET) --}}
-            <div style="display:flex; gap:8px; align-items:center;">
-                <a href="{{ route('pengguna.index') }}?download_template=1" style="display:flex; align-items:center; gap:8px; padding:10px 15px; background:white; color:#475569; border:1px solid #cbd5e1; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer; text-decoration:none; transition:0.2s;" title="Unduh Format Excel (CSV)">
-                    <i data-lucide="download" style="width:16px;height:16px;"></i> Template
-                </a>
-                <button type="button" onclick="document.getElementById('csv-input-pengguna').click()" style="display:flex; align-items:center; gap:8px; padding:10px 15px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer; transition:0.2s;">
-                    <i data-lucide="upload" style="width:16px;height:16px;"></i> Upload CSV
-                </button>
-                <button type="button" onclick="openModal('add-modal')" style="display:flex; align-items:center; gap:8px; padding:10px 15px; background:#2563eb; color:white; border:none; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer;">
-                    <i data-lucide="plus" style="width:16px;height:16px;"></i> Manual
-                </button>
+    {{-- FILTER FORM --}}
+    <div class="card" style="padding: 15px 20px;">
+        <form method="GET" action="{{ route('pengguna.index') }}" id="pengguna-filter-form" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            {{-- Search --}}
+            <div class="search-bar" style="flex:2; min-width:250px;">
+                <i data-lucide="search" class="search-icon" style="width:18px;height:18px;"></i>
+                <input type="text" name="search" value="{{ $search }}"
+                       placeholder="Cari nama, email, atau jabatan..."
+                       onkeyup="debounceSubmitPengguna(this.form)" style="width: 100%;">
             </div>
-        </div>
+
+            {{-- Semua Divisi --}}
+            <select name="divisi" class="form-select" style="flex:1; min-width:140px;"
+                    onchange="this.form.submit()">
+                <option value="Semua" {{ $divisiFilter==='Semua' ? 'selected' : '' }}>Semua Divisi</option>
+                @foreach($divisiList as $div)
+                    <option value="{{ $div }}" {{ $divisiFilter===$div ? 'selected' : '' }}>{{ $div }}</option>
+                @endforeach
+            </select>
+
+            {{-- Semua Role --}}
+            <select name="role" class="form-select" style="flex:1; min-width:130px;"
+                    onchange="this.form.submit()">
+                <option value="Semua" {{ $roleFilter==='Semua' ? 'selected' : '' }}>Semua Role</option>
+                <option value="Admin" {{ $roleFilter==='Admin' ? 'selected' : '' }}>Admin</option>
+                <option value="Pegawai" {{ $roleFilter==='Pegawai' ? 'selected' : '' }}>Pegawai</option>
+                <option value="Pemimpin" {{ $roleFilter==='Pemimpin' ? 'selected' : '' }}>Pemimpin</option>
+            </select>
+
+            {{-- Semua Status --}}
+            <select name="status" class="form-select" style="flex:1; min-width:130px;"
+                    onchange="this.form.submit()">
+                <option value="Semua" {{ $statusFilter==='Semua' ? 'selected' : '' }}>Semua Status</option>
+                <option value="Aktif" {{ $statusFilter==='Aktif' ? 'selected' : '' }}>Aktif</option>
+                <option value="Nonaktif" {{ $statusFilter==='Nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+            </select>
+        </form>
     </div>
 
     {{-- FORM UPLOAD CSV PENGGUNA (tersembunyi) --}}
@@ -101,6 +80,19 @@
         @csrf
         <input type="file" name="file_excel" accept=".csv,.xlsx,.xls" id="csv-input-pengguna" onchange="submitPenggunaCsvForm()">
     </form>
+
+    {{-- ACTION BUTTONS --}}
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom: -10px;">
+        <a href="{{ route('pengguna.index') }}?download_template=1" style="display:flex; align-items:center; gap:8px; padding:10px 15px; background:white; color:#475569; border:1px solid #cbd5e1; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer; text-decoration:none; transition:0.2s;" title="Unduh Format Excel (CSV)">
+            <i data-lucide="download" style="width:16px;height:16px;"></i> Template
+        </a>
+        <button type="button" onclick="document.getElementById('csv-input-pengguna').click()" style="display:flex; align-items:center; gap:8px; padding:10px 15px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer; transition:0.2s;">
+            <i data-lucide="upload" style="width:16px;height:16px;"></i> Upload Excel
+        </button>
+        <button type="button" onclick="openModal('add-modal')" style="display:flex; align-items:center; gap:8px; padding:10px 15px; background:#2563eb; color:white; border:none; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer;">
+            <i data-lucide="plus" style="width:16px;height:16px;"></i> Tambah
+        </button>
+    </div>
 
     {{-- TABEL PENGGUNA --}}
     <div class="card table-container">
@@ -192,7 +184,7 @@
                 <div class="form-group">
                     <label class="form-label">Kata Sandi</label>
                     <div style="position:relative;">
-                        <input type="password" name="password" id="add-password" class="form-control" required minlength="6" style="padding-right:45px;">
+                        <input type="password" name="password" id="add-password" class="form-control" required minlength="6" style="padding-right:45px;" autocomplete="new-password">
                         <button type="button" onclick="togglePassword('add-password', 'add-eye-icon')" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; color:#94a3b8;" title="Tampilkan/Sembunyikan Kata Sandi">
                             <span id="add-eye-icon" style="display:flex;">
                                 <i data-lucide="eye" style="width:18px;height:18px;"></i>
@@ -263,7 +255,7 @@
                 <div class="form-group">
                     <label class="form-label">Kata Sandi Baru <small style="color:#94a3b8;">(opsional)</small></label>
                     <div style="position:relative;">
-                        <input type="password" name="password" id="edit-password" class="form-control" minlength="6" style="padding-right:45px;">
+                        <input type="password" name="password" id="edit-password" class="form-control" minlength="6" style="padding-right:45px;" autocomplete="new-password">
                         <button type="button" onclick="togglePassword('edit-password', 'edit-eye-icon')" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; color:#94a3b8;" title="Tampilkan/Sembunyikan Kata Sandi">
                             <span id="edit-eye-icon" style="display:flex;">
                                 <i data-lucide="eye" style="width:18px;height:18px;"></i>
