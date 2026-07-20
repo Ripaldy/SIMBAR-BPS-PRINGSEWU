@@ -210,6 +210,15 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">NIP</label>
+                    <input type="text" name="nip" class="form-control" placeholder="Contoh: 199001012020121001">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">NIP BPS</label>
+                    <input type="text" name="nip_bps" class="form-control" placeholder="Contoh: 340012345">
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">Jabatan</label>
                     <input type="text" name="jabatan" class="form-control" placeholder="Contoh: Staff IT">
                 </div>
@@ -277,6 +286,15 @@
                         <option value="Aktif">Aktif</option>
                         <option value="Nonaktif">Nonaktif</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">NIP</label>
+                    <input type="text" name="nip" id="edit-nip" class="form-control" placeholder="Contoh: 199001012020121001">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">NIP BPS</label>
+                    <input type="text" name="nip_bps" id="edit-nip-bps" class="form-control" placeholder="Contoh: 340012345">
                 </div>
 
                 <div class="form-group">
@@ -356,6 +374,8 @@ function openEditUserModal(user) {
     document.getElementById('edit-role').value = user.role;
     document.getElementById('edit-status').value = user.is_verified ? 'Aktif' : 'Nonaktif';
     document.getElementById('edit-jabatan').value = user.jabatan || '';
+    document.getElementById('edit-nip').value = user.nip || '';
+    document.getElementById('edit-nip-bps').value = user.nip_bps || '';
 
     // Set divisi dropdown
     const divisiSelect = document.getElementById('edit-divisi-select');

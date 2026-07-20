@@ -19,6 +19,7 @@ class User extends Authenticatable
         'password',
         'role',
         'nip',
+        'nip_bps',
         'no_telepon',
         'jabatan',
         'divisi',

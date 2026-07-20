@@ -127,8 +127,10 @@ class AsetController extends Controller
     public function uploadCsv(Request $request)
     {
         $request->validate([
-            // FIX: Tambahkan validasi MIME type yang sesungguhnya, bukan hanya ekstensi
-            'file_excel' => 'required|file|mimes:csv,xlsx,xls,plain,vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            'file_excel' => 'required|file'
+        ], [
+            'file_excel.required' => 'Pilih file terlebih dahulu.',
+            'file_excel.file'     => 'File tidak valid.',
         ]);
 
         $file = $request->file('file_excel');
@@ -138,14 +140,26 @@ class AsetController extends Controller
             return redirect()->back()->withErrors(['file_excel' => 'File harus berformat CSV atau Excel.']);
         }
 
-        $lines = file($file->getRealPath(), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = [];
+        if (in_array($ext, ['xlsx', 'xls'])) {
+            if ($xlsx = \Shuchkin\SimpleXLSX::parse($file->getRealPath())) {
+                $lines = $xlsx->rows();
+                array_shift($lines); // skip header
+            } else {
+                return redirect()->back()->withErrors(['file_excel' => \Shuchkin\SimpleXLSX::parseError()]);
+            }
+        } else {
+            $csvLines = file($file->getRealPath(), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            array_shift($csvLines); // skip header
+            foreach ($csvLines as $line) {
+                $delimiter = strpos($line, ';') !== false ? ';' : ',';
+                $lines[] = str_getcsv($line, $delimiter);
+            }
+        }
+
         $count = 0;
 
-        array_shift($lines); // skip header
-
-        foreach ($lines as $line) {
-            $delimiter = strpos($line, ';') !== false ? ';' : ',';
-            $row = str_getcsv($line, $delimiter);
+        foreach ($lines as $row) {
 
             if (count($row) >= 4) {
                 $nama = trim(str_replace('"', '', $row[0]));

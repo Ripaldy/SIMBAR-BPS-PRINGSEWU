@@ -89,13 +89,19 @@
                     </div>
 
                     <div style="display:flex; gap:20px; flex-wrap:wrap;">
-                        <div style="flex:1; min-width:200px;">
+                        <div style="flex:1; min-width:150px;">
                             <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569; margin-bottom:8px;">
                                 <i data-lucide="hash" style="width:14px;height:14px;"></i> NIP Pegawai
                             </label>
                             <input type="text" name="nip" value="{{ old('nip', $user->nip) }}" disabled class="form-input" placeholder="-" style="width:100%; padding:12px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; color:#1f4068; background:#f8fafc; outline:none; box-sizing:border-box; font-family:inherit;">
                         </div>
-                        <div style="flex:1; min-width:200px;">
+                        <div style="flex:1; min-width:150px;">
+                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569; margin-bottom:8px;">
+                                <i data-lucide="hash" style="width:14px;height:14px;"></i> NIP BPS
+                            </label>
+                            <input type="text" name="nip_bps" value="{{ old('nip_bps', $user->nip_bps) }}" disabled class="form-input" placeholder="-" style="width:100%; padding:12px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; color:#1f4068; background:#f8fafc; outline:none; box-sizing:border-box; font-family:inherit;">
+                        </div>
+                        <div style="flex:1; min-width:150px;">
                             <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569; margin-bottom:8px;">
                                 <i data-lucide="phone" style="width:14px;height:14px;"></i> No. Telepon
                             </label>

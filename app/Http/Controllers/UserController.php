@@ -17,9 +17,9 @@ class UserController extends Controller
                 'Content-Disposition' => 'attachment; filename="template_pengguna.csv"',
             ];
             $content  = "\xEF\xBB\xBF"; // BOM untuk Excel UTF-8
-            $content .= "Nama Lengkap,Email,Password,Role,Jabatan,Divisi\n";
-            $content .= "Ahmad Fauzi,ahmad@example.com,password123,pegawai,Staff IT,IT\n";
-            $content .= "Siti Rahma,siti@example.com,password123,pegawai,Sekretaris,Administrasi\n";
+            $content .= "Nama Lengkap,Email,Password,Role,Jabatan,NIP,NIP BPS\n";
+            $content .= "Ahmad Fauzi,ahmad@example.com,password123,pegawai,Staff IT,199001012020121001,340012345\n";
+            $content .= "Siti Rahma,siti@example.com,password123,pegawai,Sekretaris,199505052021122002,340054321\n";
             return response()->make($content, 200, $headers);
         }
 
@@ -93,6 +93,8 @@ class UserController extends Controller
             'password'     => 'required|string|min:6',
             'role'         => 'required|in:admin,pegawai,pemimpin',
             'jabatan'      => 'nullable|string|max:100',
+            'nip'          => 'nullable|string|max:50',
+            'nip_bps'      => 'nullable|string|max:50',
         ]);
 
         User::create([
@@ -101,6 +103,8 @@ class UserController extends Controller
             'password'     => Hash::make($request->password),
             'role'         => strtolower($request->role),
             'jabatan'      => $request->jabatan ?: null,
+            'nip'          => $request->nip ?: null,
+            'nip_bps'      => $request->nip_bps ?: null,
             'divisi'       => $divisi,
             'is_verified'  => true,
         ]);
@@ -123,12 +127,16 @@ class UserController extends Controller
             'nama_lengkap' => 'required|string|max:255',
             'role'         => 'required|in:admin,pegawai,pemimpin',
             'jabatan'      => 'nullable|string|max:100',
+            'nip'          => 'nullable|string|max:50',
+            'nip_bps'      => 'nullable|string|max:50',
         ]);
 
         $data = [
             'nama_lengkap' => $request->nama_lengkap,
             'role'         => strtolower($request->role),
             'jabatan'      => $request->jabatan ?: null,
+            'nip'          => $request->nip ?: null,
+            'nip_bps'      => $request->nip_bps ?: null,
             'divisi'       => $divisi,
             'is_verified'  => $request->input('status') === 'Aktif',
         ];
@@ -169,9 +177,9 @@ class UserController extends Controller
             'Content-Disposition' => 'attachment; filename="template_pengguna.csv"',
         ];
         $content  = "\xEF\xBB\xBF"; // BOM untuk Excel UTF-8
-        $content .= "Nama Lengkap,Email,Password,Role,Jabatan,Divisi\n";
-        $content .= "Ahmad Fauzi,ahmad@example.com,password123,pegawai,Staff IT,IT\n";
-        $content .= "Siti Rahma,siti@example.com,password123,pegawai,Sekretaris,Administrasi\n";
+        $content .= "Nama Lengkap,Email,Password,Role,Jabatan,NIP,NIP BPS\n";
+        $content .= "Ahmad Fauzi,ahmad@example.com,password123,pegawai,Staff IT,199001012020121001,340012345\n";
+        $content .= "Siti Rahma,siti@example.com,password123,pegawai,Sekretaris,199505052021122002,340054321\n";
 
         return response()->make($content, 200, $headers);
     }
@@ -182,29 +190,40 @@ class UserController extends Controller
     public function uploadExcel(Request $request)
     {
         $request->validate([
-            // FIX: Tambahkan validasi MIME type yang sesungguhnya, bukan hanya ekstensi
-            'file_excel' => 'required|file|mimes:csv,xlsx,xls,plain,vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'file_excel' => 'required|file',
+        ], [
+            'file_excel.required' => 'Pilih file terlebih dahulu.',
+            'file_excel.file'     => 'File tidak valid.',
         ]);
 
         $file = $request->file('file_excel');
         $ext  = strtolower($file->getClientOriginalExtension());
-
+        
         if (!in_array($ext, ['csv', 'xlsx', 'xls'])) {
             return redirect()->back()->withErrors(['file_excel' => 'File harus berformat CSV atau Excel (.csv/.xlsx/.xls).']);
         }
 
-        $lines = file($file->getRealPath(), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = [];
+        if (in_array($ext, ['xlsx', 'xls'])) {
+            if ($xlsx = \Shuchkin\SimpleXLSX::parse($file->getRealPath())) {
+                $lines = $xlsx->rows();
+                array_shift($lines); // skip header
+            } else {
+                return redirect()->back()->withErrors(['file_excel' => \Shuchkin\SimpleXLSX::parseError()]);
+            }
+        } else {
+            $csvLines = file($file->getRealPath(), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            array_shift($csvLines); // skip header
+            foreach ($csvLines as $line) {
+                $delimiter = strpos($line, ';') !== false ? ';' : ',';
+                $lines[] = str_getcsv($line, $delimiter);
+            }
+        }
+
         $count = 0;
         $errors = [];
 
-        // Skip header baris pertama
-        array_shift($lines);
-
-        foreach ($lines as $lineNo => $line) {
-            // Deteksi delimiter (koma atau titik koma)
-            $delimiter = strpos($line, ';') !== false ? ';' : ',';
-            $row = str_getcsv($line, $delimiter);
-
+        foreach ($lines as $lineNo => $row) {
             if (count($row) < 3) continue;
 
             $nama  = trim(str_replace('"', '', $row[0]));
@@ -212,7 +231,8 @@ class UserController extends Controller
             $pass  = trim(str_replace('"', '', $row[2]));
             $role  = strtolower(trim(str_replace('"', '', $row[3] ?? 'pegawai')));
             $jabatan = trim(str_replace('"', '', $row[4] ?? ''));
-            $divisi  = trim(str_replace('"', '', $row[5] ?? ''));
+            $nip     = trim(str_replace('"', '', $row[5] ?? ''));
+            $nip_bps = trim(str_replace('"', '', $row[6] ?? ''));
 
             if (empty($nama) || empty($email) || empty($pass)) continue;
             if (!in_array($role, ['admin', 'pegawai', 'pemimpin'])) $role = 'pegawai';
@@ -229,7 +249,8 @@ class UserController extends Controller
                 'password'     => Hash::make($pass),
                 'role'         => $role,
                 'jabatan'      => $jabatan ?: null,
-                'divisi'       => $divisi ?: null,
+                'nip'          => $nip ?: null,
+                'nip_bps'      => $nip_bps ?: null,
                 'is_verified'  => true,
             ]);
             $count++;

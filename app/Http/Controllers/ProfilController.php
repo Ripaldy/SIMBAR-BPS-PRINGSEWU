@@ -21,14 +21,15 @@ class ProfilController extends Controller
 
         $request->validate([
             'nama_lengkap' => 'required|string|max:255',
-            'nip'          => 'nullable|string|max:30',
+            'nip'          => 'nullable|string|max:50',
+            'nip_bps'      => 'nullable|string|max:50',
             'no_telepon'   => 'nullable|string|max:20',
             'jabatan'      => 'nullable|string|max:100',
             'divisi'       => 'nullable|string|max:100',
             'foto_profil'  => 'nullable|image|max:2048',
         ]);
 
-        $data = $request->only(['nama_lengkap', 'nip', 'no_telepon', 'jabatan', 'divisi']);
+        $data = $request->only(['nama_lengkap', 'nip', 'nip_bps', 'no_telepon', 'jabatan', 'divisi']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
