@@ -4,10 +4,7 @@
 @section('content')
 <div style="display:flex; flex-direction:column; gap:25px; max-width:1200px; margin:0 auto;">
 
-    <h2 class="page-title">
-        <i data-lucide="boxes" style="width:28px;height:28px;color:#2563eb;"></i>
-        Manajemen Barang / Aset
-    </h2>
+
 
     {{-- TOOLBAR --}}
     <div class="card">

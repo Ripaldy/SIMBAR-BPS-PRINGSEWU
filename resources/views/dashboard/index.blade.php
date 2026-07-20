@@ -46,7 +46,7 @@
             </div>
             <form method="GET" action="{{ route('dashboard') }}" style="display:flex; gap:10px; flex-wrap:wrap;" id="chart-form">
                 <select name="chart_type" class="form-select" style="width:auto;" onchange="document.getElementById('chart-form').submit();">
-                    <option value="tren" {{ request('chart_type','tren')==='tren' ? 'selected' : '' }}>Grafik Tren Barang Keluar</option>
+                    <option value="tren" {{ request('chart_type','tren')==='tren' ? 'selected' : '' }}>Grafik Tren Barang</option>
                     <option value="terlaris" {{ request('chart_type')==='terlaris' ? 'selected' : '' }}>Peringkat Barang Terlaris</option>
                 </select>
                 @if(request('chart_type') === 'terlaris')
@@ -62,18 +62,18 @@
                         <option value="{{ $y }}" {{ $year==$y ? 'selected' : '' }}>Tahun {{ $y }}</option>
                     @endforeach
                 </select>
+                @if(request('chart_type', 'tren') === 'tren')
+                <select id="trend-filter-select" class="form-select" style="width:auto;" onchange="filterChart(this.value)">
+                    <option value="gabungan">Gabungan</option>
+                    <option value="masuk">Barang Masuk</option>
+                    <option value="keluar">Barang Keluar</option>
+                </select>
+                @endif
             </form>
         </div>
 
         {{-- Chart Canvas --}}
         <div style="height:400px; width:100%; border:1px solid #f1f5f9; border-radius:12px; padding:20px; box-sizing:border-box; position:relative; display:flex; flex-direction:column;">
-            @if(request('chart_type', 'tren') === 'tren')
-            <div style="display:flex; gap:10px; justify-content:center; margin-bottom:15px;" id="chart-filters">
-                <button type="button" onclick="filterChart('masuk')" id="btn-masuk" style="padding:6px 15px; border-radius:6px; border:1px solid #2ecc71; background:#2ecc71; color:white; font-weight:bold; cursor:pointer; font-size:13px; transition:0.2s;">Barang Masuk</button>
-                <button type="button" onclick="filterChart('keluar')" id="btn-keluar" style="padding:6px 15px; border-radius:6px; border:1px solid #e74c3c; background:#e74c3c; color:white; font-weight:bold; cursor:pointer; font-size:13px; transition:0.2s;">Barang Keluar</button>
-                <button type="button" onclick="filterChart('gabungan')" id="btn-gabungan" style="padding:6px 15px; border-radius:6px; border:1px solid #3498db; background:#3498db; color:white; font-weight:bold; cursor:pointer; font-size:13px; transition:0.2s;">Gabungan</button>
-            </div>
-            @endif
             <div style="flex:1; position:relative; width:100%;">
                 <canvas id="mainChart"></canvas>
             </div>
@@ -186,28 +186,16 @@ if (chartType === 'tren') {
 
     // Fungsi untuk memfilter grafik
     window.filterChart = function(type) {
-        const btnMasuk = document.getElementById('btn-masuk');
-        const btnKeluar = document.getElementById('btn-keluar');
-        const btnGabungan = document.getElementById('btn-gabungan');
-
-        // Reset opacity
-        btnMasuk.style.opacity = '0.5';
-        btnKeluar.style.opacity = '0.5';
-        btnGabungan.style.opacity = '0.5';
-
-        // Tampilkan/Sembunyikan dataset dan ubah style tombol aktif
+        // Tampilkan/Sembunyikan dataset
         if(type === 'masuk') {
             chart.setDatasetVisibility(0, false); // Sembunyikan keluar
             chart.setDatasetVisibility(1, true);  // Tampilkan masuk
-            btnMasuk.style.opacity = '1';
         } else if(type === 'keluar') {
             chart.setDatasetVisibility(0, true);  // Tampilkan keluar
             chart.setDatasetVisibility(1, false); // Sembunyikan masuk
-            btnKeluar.style.opacity = '1';
         } else {
             chart.setDatasetVisibility(0, true);  // Tampilkan keluar
             chart.setDatasetVisibility(1, true);  // Tampilkan masuk
-            btnGabungan.style.opacity = '1';
         }
         chart.update();
     }
