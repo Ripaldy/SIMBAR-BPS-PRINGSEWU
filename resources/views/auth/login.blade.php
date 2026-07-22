@@ -69,12 +69,18 @@
                 </div>
 
                 <div style="display:flex; justify-content:center; margin-top:10px;">
-                    <button type="submit" id="submit-btn" style="padding:12px 30px; background-color:#21527e; color:white; border:none; border-radius:25px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 10px rgba(33,82,126,0.3); font-family:inherit;">
-                        <span id="btn-text">SIGN IN</span>
+                    <button type="submit" id="submit-btn" style="width:100%; padding:12px; background-color:#21527e; color:white; border:none; border-radius:25px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 10px rgba(33,82,126,0.3); font-family:inherit; box-sizing:border-box; transition:opacity 0.2s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                        <span id="btn-text">Login</span>
                         <i data-lucide="arrow-right" style="width:16px;height:16px;" id="btn-icon"></i>
                     </button>
                 </div>
             </form>
+
+            {{-- Tombol Login SSO BPS --}}
+            <a href="#" style="width:100%; max-width:320px; margin-top:10px; padding:12px; background-color:#21527e; color:white; border:none; border-radius:25px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; box-shadow:0 4px 10px rgba(33,82,126,0.3); font-family:inherit; box-sizing:border-box; transition:opacity 0.2s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                <i data-lucide="shield-check" style="width:18px;height:18px;"></i>
+                <span>Login SSO BPS</span>
+            </a>
         </div>
 
         {{-- KANAN: PANEL BIRU --}}
