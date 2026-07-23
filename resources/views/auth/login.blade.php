@@ -77,7 +77,7 @@
             </form>
 
             {{-- Tombol Login SSO BPS --}}
-            <a href="#" style="width:100%; max-width:320px; margin-top:10px; padding:12px; background-color:#21527e; color:white; border:none; border-radius:25px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; box-shadow:0 4px 10px rgba(33,82,126,0.3); font-family:inherit; box-sizing:border-box; transition:opacity 0.2s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+            <a href="https://sso.bps.go.id/auth/realms/pegawai-bps/protocol/openid-connect/auth?client_id=account&redirect_uri=https%3A%2F%2Fsso.bps.go.id%2Fauth%2Frealms%2Fpegawai-bps%2Faccount%2F&response_type=code" style="width:100%; max-width:320px; margin-top:10px; padding:12px; background-color:#21527e; color:white; border:none; border-radius:25px; font-weight:bold; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; box-shadow:0 4px 10px rgba(33,82,126,0.3); font-family:inherit; box-sizing:border-box; transition:opacity 0.2s ease;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
                 <i data-lucide="shield-check" style="width:18px;height:18px;"></i>
                 <span>Login SSO BPS</span>
             </a>
