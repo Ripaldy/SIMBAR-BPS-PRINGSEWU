@@ -9,45 +9,75 @@ use Illuminate\Support\Facades\Storage;
 
 class AsetController extends Controller
 {
-    // Logika menampilkan halaman manajemen aset dan fungsi unduh template CSV
+    // Tampilkan halaman manajemen aset + fungsi unduh template CSV
     public function index(Request $request)
     {
         if ($request->has('download_template')) {
-            $headers = [
-                'Content-Type'        => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="template_barang.csv"',
+            $data = [
+                ['Kode Kategori', 'Nama Kategori', 'Kode Barang', 'Nama Barang', 'Satuan', 'Stok Aktual', 'Stok Minimum'],
+                ['1010301001', 'ALAT TULIS', '000001', 'BALLPOINT BOLLINER', 'PCS', 50, 10],
+                ['1010301001', 'ALAT TULIS', '000004', 'SPIDOL', 'PCS', 20, 5],
+                ['1010302001', 'KERTAS', '000010', 'KERTAS HVS A4', 'RIM', 30, 5],
             ];
-            $content  = "\xEF\xBB\xBF";
-            $content .= "Nama Barang,Satuan,Stok Aktual,Stok Minimum\n";
-            $content .= "KERTAS HVS A4,RIM,50,10\n";
-            $content .= "SPIDOL HITAM,PCS,20,5\n";
-
-            return response()->make($content, 200, $headers);
+            
+            return response()->streamDownload(function() use ($data) {
+                echo \Shuchkin\SimpleXLSXGen::fromArray($data);
+            }, 'template_barang_bps.xlsx');
         }
 
-        $search = $request->get('search', '');
+        $search          = $request->get('search', '');
+        $filterKategori  = $request->get('kode_kategori', '');
 
         $barang = Barang::when($search, function ($q) use ($search) {
-                $q->where('nama_barang', 'ilike', "%{$search}%");
+                $q->where(function ($q2) use ($search) {
+                    $q2->where('nama_barang',   'ilike', "%{$search}%")
+                       ->orWhere('kode_barang', 'ilike', "%{$search}%");
+                });
             })
+            ->when($filterKategori, function ($q) use ($filterKategori) {
+                $q->where('kode_kategori', $filterKategori);
+            })
+            ->orderByRaw("kode_kategori NULLS LAST")
+            ->orderByRaw("kode_barang NULLS LAST")
             ->orderBy('nama_barang')
             ->get();
 
-        return view('dashboard.aset', compact('barang', 'search'));
+        // Daftar kategori unik dari tabel barang (untuk dropdown filter)
+        $kategoriList = Barang::whereNotNull('kode_kategori')
+            ->select('kode_kategori', 'nama_kategori')
+            ->distinct()
+            ->orderBy('kode_kategori')
+            ->get();
+
+        // Daftar satuan unik dari tabel barang (untuk datalist)
+        $satuanList = Barang::whereNotNull('satuan')
+            ->select('satuan')
+            ->distinct()
+            ->orderBy('satuan')
+            ->pluck('satuan');
+
+        return view('dashboard.aset', compact('barang', 'search', 'kategoriList', 'filterKategori', 'satuanList'));
     }
 
-    // Logika fungsi tambah manual barang
+    // Tambah barang manual
     public function store(Request $request)
     {
         $request->validate([
-            'nama_barang'  => 'required|string|max:255',
-            'satuan'       => 'required|string|max:50',
-            'stok_aktual'  => 'required|integer|min:0',
-            'stok_minimum' => 'required|integer|min:0',
-            'foto_barang'  => 'nullable|image|max:2048',
+            'nama_barang'   => 'required|string|max:255',
+            'satuan'        => 'nullable|string|max:50',
+            'harga_satuan'  => 'nullable|integer|min:0',
+            'stok_aktual'   => 'required|integer|min:0',
+            'stok_minimum'  => 'required|integer|min:0',
+            'foto_barang'   => 'nullable|image|max:2048',
+            'kode_barang'   => 'nullable|string|max:50',
+            'kode_kategori' => 'nullable|string|max:50',
+            'nama_kategori' => 'nullable|string|max:255',
         ]);
 
-        $data = $request->only(['nama_barang', 'satuan', 'stok_aktual', 'stok_minimum']);
+        $data = $request->only(['nama_barang', 'satuan', 'harga_satuan', 'stok_aktual', 'stok_minimum', 'kode_barang', 'kode_kategori', 'nama_kategori']);
+        $data['harga_satuan']    = (int) ($data['harga_satuan'] ?? 0);
+        $data['nama_barang']     = strtoupper($data['nama_barang']);
+        $data['nama_kategori']   = isset($data['nama_kategori']) ? strtoupper($data['nama_kategori']) : null;
         $data['is_auto_approve'] = $request->boolean('is_auto_approve');
 
         if ($request->hasFile('foto_barang')) {
@@ -55,32 +85,59 @@ class AsetController extends Controller
             $data['foto_barang'] = basename($path);
         }
 
-        $barang = Barang::create($data);
+        $existingBarang = null;
+        if (!empty($data['kode_barang'])) {
+            $existingBarang = Barang::where('kode_barang', $data['kode_barang'])->first();
+        } else {
+            $existingBarang = Barang::where('nama_barang', $data['nama_barang'])->first();
+        }
 
-        // Record to barang_masuk history
-        BarangMasuk::create([
-            'id_barang' => $barang->id_barang,
-            'jumlah_masuk' => $barang->stok_aktual,
-            'id_user' => auth()->id()
-        ]);
+        if ($existingBarang) {
+            // Jika barang sudah ada, cukup tambahkan stoknya
+            if ($data['stok_aktual'] > 0) {
+                $existingBarang->increment('stok_aktual', $data['stok_aktual']);
+                
+                BarangMasuk::create([
+                    'id_barang'    => $existingBarang->id_barang,
+                    'jumlah_masuk' => $data['stok_aktual'],
+                    'id_user'      => auth()->id()
+                ]);
+            }
+        } else {
+            // Buat barang baru
+            $barang = Barang::create($data);
+
+            BarangMasuk::create([
+                'id_barang'    => $barang->id_barang,
+                'jumlah_masuk' => $barang->stok_aktual,
+                'id_user'      => auth()->id()
+            ]);
+        }
 
         return redirect()->route('aset.index')->with('success', 'Barang berhasil ditambahkan.');
     }
 
-    // Logika fungsi update atau edit barang
+    // Edit barang
     public function update(Request $request, $id)
     {
         $barang = Barang::findOrFail($id);
 
         $request->validate([
-            'nama_barang'  => 'required|string|max:255',
-            'satuan'       => 'required|string|max:50',
-            'stok_aktual'  => 'required|integer|min:0',
-            'stok_minimum' => 'required|integer|min:0',
-            'foto_barang'  => 'nullable|image|max:2048',
+            'nama_barang'   => 'required|string|max:255',
+            'satuan'        => 'nullable|string|max:50',
+            'harga_satuan'  => 'nullable|integer|min:0',
+            'stok_aktual'   => 'required|integer|min:0',
+            'stok_minimum'  => 'required|integer|min:0',
+            'foto_barang'   => 'nullable|image|max:2048',
+            'kode_barang'   => 'nullable|string|max:50',
+            'kode_kategori' => 'nullable|string|max:50',
+            'nama_kategori' => 'nullable|string|max:255',
         ]);
 
-        $data = $request->only(['nama_barang', 'satuan', 'stok_aktual', 'stok_minimum']);
+        $data = $request->only(['nama_barang', 'satuan', 'harga_satuan', 'stok_aktual', 'stok_minimum', 'kode_barang', 'kode_kategori', 'nama_kategori']);
+        $data['harga_satuan']    = (int) ($data['harga_satuan'] ?? 0);
+        $data['nama_barang']     = strtoupper($data['nama_barang']);
+        $data['nama_kategori']   = isset($data['nama_kategori']) ? strtoupper($data['nama_kategori']) : null;
         $data['is_auto_approve'] = $request->boolean('is_auto_approve');
 
         if ($request->hasFile('foto_barang')) {
@@ -95,24 +152,23 @@ class AsetController extends Controller
         return redirect()->route('aset.index')->with('success', 'Barang berhasil diperbarui.');
     }
 
-    // Logika fungsi tambah stok barang
+    // Tambah stok barang
     public function addStock(Request $request, $id)
     {
         $request->validate(['jumlah_tambah' => 'required|integer|min:1']);
         $barang = Barang::findOrFail($id);
         $barang->increment('stok_aktual', $request->jumlah_tambah);
 
-        // Record to barang_masuk history
         BarangMasuk::create([
-            'id_barang' => $barang->id_barang,
+            'id_barang'    => $barang->id_barang,
             'jumlah_masuk' => $request->jumlah_tambah,
-            'id_user' => auth()->id()
+            'id_user'      => auth()->id()
         ]);
 
         return redirect()->route('aset.index')->with('success', 'Stok berhasil ditambahkan.');
     }
 
-    // Logika fungsi hapus barang
+    // Hapus barang
     public function destroy($id)
     {
         $barang = Barang::findOrFail($id);
@@ -123,7 +179,7 @@ class AsetController extends Controller
         return redirect()->route('aset.index')->with('success', 'Barang berhasil dihapus.');
     }
 
-    // Logika upload dan import file CSV
+    // Import CSV/Excel (format BPS baru)
     public function uploadCsv(Request $request)
     {
         $request->validate([
@@ -144,13 +200,13 @@ class AsetController extends Controller
         if (in_array($ext, ['xlsx', 'xls'])) {
             if ($xlsx = \Shuchkin\SimpleXLSX::parse($file->getRealPath())) {
                 $lines = $xlsx->rows();
-                array_shift($lines); // skip header
+                array_shift($lines);
             } else {
                 return redirect()->back()->withErrors(['file_excel' => \Shuchkin\SimpleXLSX::parseError()]);
             }
         } else {
             $csvLines = file($file->getRealPath(), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            array_shift($csvLines); // skip header
+            array_shift($csvLines);
             foreach ($csvLines as $line) {
                 $delimiter = strpos($line, ';') !== false ? ';' : ',';
                 $lines[] = str_getcsv($line, $delimiter);
@@ -160,26 +216,89 @@ class AsetController extends Controller
         $count = 0;
 
         foreach ($lines as $row) {
+            // Format BPS: Kode Kategori | Nama Kategori | Kode Barang | Nama Barang | Satuan | Stok Aktual | Stok Minimum
+            if (count($row) >= 7) {
+                $kodeKategori = strtoupper(trim(str_replace('"', '', $row[0])));
+                $namaKategori = strtoupper(trim(str_replace('"', '', $row[1])));
+                $kodeBarang   = trim(str_replace('"', '', $row[2]));
+                $namaBarang   = strtoupper(trim(str_replace('"', '', $row[3])));
+                if (empty($namaBarang)) continue;
 
-            if (count($row) >= 4) {
-                $nama = trim(str_replace('"', '', $row[0]));
-                if (empty($nama)) continue;
+                $stokAktual = (int) trim($row[5]);
+
+                $existingBarang = null;
+                if (!empty($kodeBarang)) {
+                    $existingBarang = Barang::where('kode_barang', $kodeBarang)->first();
+                } else {
+                    $existingBarang = Barang::where('nama_barang', $namaBarang)->first();
+                }
+
+                if ($existingBarang) {
+                    if ($stokAktual > 0) {
+                        $existingBarang->increment('stok_aktual', $stokAktual);
+                        BarangMasuk::create([
+                            'id_barang'    => $existingBarang->id_barang,
+                            'jumlah_masuk' => $stokAktual,
+                            'id_user'      => auth()->id()
+                        ]);
+                    }
+                    $count++;
+                    continue;
+                }
 
                 $barang = Barang::create([
-                    'nama_barang'     => strtoupper($nama),
+                    'kode_kategori'   => $kodeKategori ?: null,
+                    'nama_kategori'   => $namaKategori ?: null,
+                    'kode_barang'     => $kodeBarang ?: null,
+                    'nama_barang'     => $namaBarang,
+                    'satuan'          => strtoupper(trim(str_replace('"', '', $row[4]))),
+                    'stok_aktual'     => $stokAktual,
+                    'stok_minimum'    => (int) trim($row[6]),
+                    'is_auto_approve' => false,
+                ]);
+
+                BarangMasuk::create([
+                    'id_barang'    => $barang->id_barang,
+                    'jumlah_masuk' => $barang->stok_aktual,
+                    'id_user'      => auth()->id()
+                ]);
+                $count++;
+
+            } elseif (count($row) >= 4) {
+                // Format lama (backward compat): Nama Barang | Satuan | Stok Aktual | Stok Minimum
+                $nama = strtoupper(trim(str_replace('"', '', $row[0])));
+                if (empty($nama)) continue;
+
+                $stokAktual = (int) trim($row[2]);
+
+                $existingBarang = Barang::where('nama_barang', $nama)->first();
+
+                if ($existingBarang) {
+                    if ($stokAktual > 0) {
+                        $existingBarang->increment('stok_aktual', $stokAktual);
+                        BarangMasuk::create([
+                            'id_barang'    => $existingBarang->id_barang,
+                            'jumlah_masuk' => $stokAktual,
+                            'id_user'      => auth()->id()
+                        ]);
+                    }
+                    $count++;
+                    continue;
+                }
+
+                $barang = Barang::create([
+                    'nama_barang'     => $nama,
                     'satuan'          => strtoupper(trim(str_replace('"', '', $row[1]))),
-                    'stok_aktual'     => (int) trim($row[2]),
+                    'stok_aktual'     => $stokAktual,
                     'stok_minimum'    => (int) trim($row[3]),
                     'is_auto_approve' => false,
                 ]);
 
-                // Record to barang_masuk history
                 BarangMasuk::create([
-                    'id_barang' => $barang->id_barang,
+                    'id_barang'    => $barang->id_barang,
                     'jumlah_masuk' => $barang->stok_aktual,
-                    'id_user' => auth()->id()
+                    'id_user'      => auth()->id()
                 ]);
-
                 $count++;
             }
         }

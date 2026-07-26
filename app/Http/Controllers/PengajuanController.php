@@ -68,14 +68,25 @@ class PengajuanController extends Controller
     public function katalog(Request $request)
     {
         $search = $request->get('search', '');
-        $barang = Barang::where('stok_aktual', '>', 0)
+        $filterKategori = $request->get('kode_kategori', '');
+
+        $barang = Barang::query()
             ->when($search, function ($q) use ($search) {
                 $q->where('nama_barang', 'ilike', "%{$search}%");
+            })
+            ->when($filterKategori, function ($q) use ($filterKategori) {
+                $q->where('kode_kategori', $filterKategori);
             })
             ->orderBy('nama_barang')
             ->get();
 
-        return view('pegawai.katalog', compact('barang', 'search'));
+        $kategoriList = Barang::whereNotNull('kode_kategori')
+            ->select('kode_kategori', 'nama_kategori')
+            ->distinct()
+            ->orderBy('kode_kategori')
+            ->get();
+
+        return view('pegawai.katalog', compact('barang', 'search', 'kategoriList', 'filterKategori'));
     }
 
     public function submitPengajuan(Request $request)
@@ -88,35 +99,50 @@ class PengajuanController extends Controller
         $user = auth()->user();
         $waktu = Carbon::now();
 
-        DB::transaction(function () use ($request, $user, $waktu) {
-            foreach ($request->items as $item) {
-                $barang = Barang::findOrFail($item['id_barang']);
-                $jumlah = (int) $item['qty'];
+        try {
+            DB::transaction(function () use ($request, $user, $waktu) {
+                // Validasi stok sebelum insert
+                foreach ($request->items as $item) {
+                    $barang = Barang::findOrFail($item['id_barang']);
+                    $jumlah = (int) $item['qty'];
 
-                if ($jumlah > $barang->stok_aktual) continue;
-
-                $status = $barang->is_auto_approve ? 'approved' : 'pending';
-                $jumlahDisetujui = $barang->is_auto_approve ? $jumlah : 0;
-
-                Pengajuan::create([
-                    'id_user'         => $user->id_user,
-                    'id_barang'       => $barang->id_barang,
-                    'jumlah_diminta'  => $jumlah,
-                    'jumlah_disetujui' => $jumlahDisetujui,
-                    'status_pengajuan' => $status,
-                    'alasan'          => $request->alasan,
-                    'waktu_pengajuan' => $waktu,
-                    'waktu_diproses'  => $barang->is_auto_approve ? $waktu : null,
-                    'diproses_oleh'   => $barang->is_auto_approve ? null : null,
-                ]);
-
-                if ($barang->is_auto_approve) {
-                    $barang->decrement('stok_aktual', $jumlah);
+                    if ($jumlah <= 0) {
+                        throw new \Exception("Jumlah untuk barang {$barang->nama_barang} harus lebih dari 0.");
+                    }
+                    if ($jumlah > $barang->stok_aktual) {
+                        throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi (Sisa: {$barang->stok_aktual}).");
+                    }
                 }
-            }
-        });
 
-        return redirect()->route('katalog.index')->with('success', 'Pengajuan berhasil dikirim.');
+                foreach ($request->items as $item) {
+                    $barang = Barang::findOrFail($item['id_barang']);
+                    $jumlah = (int) $item['qty'];
+
+                    $status = $barang->is_auto_approve ? 'approved' : 'pending';
+                    $jumlahDisetujui = $barang->is_auto_approve ? $jumlah : 0;
+
+                    Pengajuan::create([
+                        'id_user'         => $user->id_user,
+                        'id_barang'       => $barang->id_barang,
+                        'jumlah_diminta'  => $jumlah,
+                        'jumlah_disetujui' => $jumlahDisetujui,
+                        'status_pengajuan' => $status,
+                        'alasan'          => $request->alasan,
+                        'waktu_pengajuan' => $waktu,
+                        'waktu_diproses'  => $barang->is_auto_approve ? $waktu : null,
+                        'diproses_oleh'   => $barang->is_auto_approve ? null : null,
+                    ]);
+
+                    if ($barang->is_auto_approve) {
+                        $barang->decrement('stok_aktual', $jumlah);
+                    }
+                }
+            });
+
+            return redirect()->route('katalog.index')->with('success', 'Pengajuan berhasil dikirim.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['message' => $e->getMessage()]);
+        }
     }
 
     // ===================== PEGAWAI: RIWAYAT =====================
@@ -167,6 +193,9 @@ class PengajuanController extends Controller
                 'nama_lengkap'     => $p->user->nama_lengkap ?? '-',
                 'divisi'           => $p->user->divisi ?? '-',
                 'nama_barang'      => $p->barang->nama_barang ?? '-',
+                'kode_barang'      => $p->barang->kode_barang ?? null,
+                'kode_kategori'    => $p->barang->kode_kategori ?? null,
+                'nama_kategori'    => $p->barang->nama_kategori ?? null,
                 'foto_barang'      => $p->barang->foto_barang ?? null,
                 'satuan'           => $p->barang->satuan ?? '-',
                 'jumlah_diminta'   => $p->jumlah_diminta,
@@ -183,10 +212,44 @@ class PengajuanController extends Controller
                 'id_barang_masuk' => $bm->id_barang_masuk,
                 'id_barang'       => $bm->id_barang,
                 'nama_barang'     => $bm->barang->nama_barang ?? '-',
+                'kode_barang'     => $bm->barang->kode_barang ?? null,
                 'foto_barang'     => $bm->barang->foto_barang ?? null,
                 'satuan'          => $bm->barang->satuan ?? '-',
                 'jumlah_masuk'    => $bm->jumlah_masuk,
                 'waktu_masuk'     => $bm->waktu_masuk ? $bm->waktu_masuk->toIso8601String() : null,
+            ];
+        })->values()->toArray();
+
+        // ===== DATA LAPORAN RINCIAN BARANG PERSEDIAAN =====
+        // Ambil semua barang beserta relasi barang_masuk dan pengajuan
+        $semuaBarang = Barang::with(['pengajuan' => function($q) {
+                $q->whereIn('status_pengajuan', ['approved', 'sebagian']);
+            }, 'barangMasuk'])
+            ->orderBy('kode_kategori')
+            ->orderBy('kode_barang')
+            ->get();
+
+        $rincianData = $semuaBarang->map(function ($b) {
+            return [
+                'id_barang'       => $b->id_barang,
+                'kode_barang'     => $b->kode_barang ?? null,
+                'nama_barang'     => $b->nama_barang,
+                'kode_kategori'   => $b->kode_kategori ?? null,
+                'nama_kategori'   => $b->nama_kategori ?? null,
+                'foto_barang'     => $b->foto_barang ?? null,
+                'satuan'          => $b->satuan ?? '-',
+                'harga_satuan'    => (int) ($b->harga_satuan ?? 0),
+                'stok_aktual'     => (int) $b->stok_aktual,
+                // pengajuan per item: [{ id_barang, jumlah_disetujui, waktu_pengajuan }]
+                'pengajuan'       => $b->pengajuan->map(fn($p) => [
+                    'jumlah_disetujui' => (int) ($p->jumlah_disetujui ?? 0),
+                    'waktu'            => $p->waktu_pengajuan ? $p->waktu_pengajuan->toIso8601String() : null,
+                ])->values()->toArray(),
+                // barang_masuk per item: [{ jumlah_masuk, waktu_masuk }]
+                'barang_masuk'    => $b->barangMasuk->map(fn($bm) => [
+                    'jumlah_masuk' => (int) $bm->jumlah_masuk,
+                    'waktu'        => $bm->waktu_masuk ? $bm->waktu_masuk->toIso8601String() : null,
+                ])->values()->toArray(),
             ];
         })->values()->toArray();
 
@@ -209,7 +272,7 @@ class PengajuanController extends Controller
 
         $availableYears = range(now()->year, 2024);
 
-        return view('dashboard.laporan', compact('riwayatData', 'divisiList', 'availableYears', 'barangMasukData'));
+        return view('dashboard.laporan', compact('riwayatData', 'divisiList', 'availableYears', 'barangMasukData', 'rincianData'));
     }
 
     public function hapusLaporan(Request $request)

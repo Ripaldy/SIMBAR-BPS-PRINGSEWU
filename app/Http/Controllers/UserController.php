@@ -10,17 +10,17 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        // Handle download template CSV
+        // Handle download template CSV/Excel
         if ($request->has('download_template')) {
-            $headers = [
-                'Content-Type'        => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="template_pengguna.csv"',
+            $data = [
+                ['Nama Lengkap', 'Email', 'Password', 'Role', 'Jabatan', 'NIP', 'NIP BPS'],
+                ['Ahmad Fauzi', 'ahmad@example.com', 'password123', 'pegawai', 'Staff IT', '199001012020121001', '340012345'],
+                ['Siti Rahma', 'siti@example.com', 'password123', 'pegawai', 'Sekretaris', '199505052021122002', '340054321'],
             ];
-            $content  = "\xEF\xBB\xBF"; // BOM untuk Excel UTF-8
-            $content .= "Nama Lengkap,Email,Password,Role,Jabatan,NIP,NIP BPS\n";
-            $content .= "Ahmad Fauzi,ahmad@example.com,password123,pegawai,Staff IT,199001012020121001,340012345\n";
-            $content .= "Siti Rahma,siti@example.com,password123,pegawai,Sekretaris,199505052021122002,340054321\n";
-            return response()->make($content, 200, $headers);
+            
+            return response()->streamDownload(function() use ($data) {
+                echo \Shuchkin\SimpleXLSXGen::fromArray($data);
+            }, 'template_pengguna.xlsx');
         }
 
         $search       = $request->get('search', '');
@@ -168,20 +168,19 @@ class UserController extends Controller
     }
 
     /**
-     * Download template CSV untuk import pengguna
+     * Download template CSV/Excel untuk import pengguna
      */
     public function downloadTemplate(Request $request)
     {
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="template_pengguna.csv"',
+        $data = [
+            ['Nama Lengkap', 'Email', 'Password', 'Role', 'Jabatan', 'NIP', 'NIP BPS'],
+            ['Ahmad Fauzi', 'ahmad@example.com', 'password123', 'pegawai', 'Staff IT', '199001012020121001', '340012345'],
+            ['Siti Rahma', 'siti@example.com', 'password123', 'pegawai', 'Sekretaris', '199505052021122002', '340054321'],
         ];
-        $content  = "\xEF\xBB\xBF"; // BOM untuk Excel UTF-8
-        $content .= "Nama Lengkap,Email,Password,Role,Jabatan,NIP,NIP BPS\n";
-        $content .= "Ahmad Fauzi,ahmad@example.com,password123,pegawai,Staff IT,199001012020121001,340012345\n";
-        $content .= "Siti Rahma,siti@example.com,password123,pegawai,Sekretaris,199505052021122002,340054321\n";
-
-        return response()->make($content, 200, $headers);
+        
+        return response()->streamDownload(function() use ($data) {
+            echo \Shuchkin\SimpleXLSXGen::fromArray($data);
+        }, 'template_pengguna.xlsx');
     }
 
     /**

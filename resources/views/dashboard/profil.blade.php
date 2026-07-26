@@ -64,7 +64,7 @@
                         <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569; margin-bottom:8px;">
                             <i data-lucide="user" style="width:14px;height:14px;"></i> Nama Lengkap
                         </label>
-                        <input type="text" name="nama_lengkap" value="{{ old('nama_lengkap', $user->nama_lengkap) }}" disabled class="form-input" required placeholder="Belum melengkapi biodata" style="width:100%; padding:12px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; color:#1f4068; background:#f8fafc; outline:none; box-sizing:border-box; font-family:inherit;">
+                        <input type="text" name="nama_lengkap" value="{{ old('nama_lengkap', $user->nama_lengkap) }}" disabled class="form-input" required autocomplete="name" placeholder="Belum melengkapi biodata" style="width:100%; padding:12px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; color:#1f4068; background:#f8fafc; outline:none; box-sizing:border-box; font-family:inherit;">
                     </div>
 
                     <div>
@@ -79,7 +79,7 @@
                             <i data-lucide="lock" style="width:14px;height:14px;"></i> Kata Sandi <span style="font-size:10px; color:#94a3b8;">(Kosongkan jika tidak ingin diubah)</span>
                         </label>
                         <div style="position:relative;">
-                            <input type="password" name="password" id="inputPassword" disabled class="form-input" placeholder="********" style="width:100%; padding:12px 15px; padding-right:45px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; color:#1f4068; background:#f8fafc; outline:none; box-sizing:border-box; font-family:inherit;">
+                            <input type="password" name="password" id="inputPassword" disabled class="form-input" autocomplete="new-password" placeholder="********" style="width:100%; padding:12px 15px; padding-right:45px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; color:#1f4068; background:#f8fafc; outline:none; box-sizing:border-box; font-family:inherit;">
                             <button type="button" onclick="togglePassword()" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; color:#94a3b8;" title="Tampilkan/Sembunyikan Kata Sandi">
                                 <span id="eyeIconContainer" style="display:flex;">
                                     <i data-lucide="eye" style="width:18px;height:18px;"></i>
@@ -119,13 +119,13 @@
 
                         <div style="flex:1; min-width:200px;">
                             <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569; margin-bottom:8px;">
-                                <i data-lucide="users" style="width:14px;height:14px;"></i> Tim / Divisi
+                                <i data-lucide="users" style="width:14px;height:14px;"></i> Tim Kerja
                             </label>
                             <div id="divisi-view" style="width:100%; padding:12px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; color:#1f4068; background:#f8fafc; box-sizing:border-box;">
                                 {{ $user->divisi ?: 'Belum diatur' }}
                             </div>
                             <select name="divisi" id="divisi-edit" class="form-input" style="display:none; width:100%; padding:12px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:14px; color:#1f4068; background:white; outline:none; box-sizing:border-box; font-family:inherit;">
-                                <option value="">Pilih Tim / Divisi</option>
+                                <option value="">Pilih Tim Kerja</option>
                                 @php
                                     $divisiList = [
                                         'Tim Subbagian Umum', 'Tim Statistik Sosial', 'Tim Statistik Produksi',

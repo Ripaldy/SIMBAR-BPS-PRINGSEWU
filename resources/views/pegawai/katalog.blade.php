@@ -17,13 +17,23 @@
         </div>
 
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            {{-- Search --}}
-            <div style="position:relative; min-width:250px;">
-                <input type="text" id="katalog-search" placeholder="Cari nama barang..."
-                    style="width:100%; padding:10px 15px 10px 38px; border-radius:25px; border:1px solid #e2e8f0; outline:none; font-size:12px; box-sizing:border-box; font-family:inherit;"
-                    oninput="filterKatalog()" value="">
-                <i data-lucide="search" style="width:16px;height:16px;color:#94a3b8;position:absolute;left:14px;top:50%;transform:translateY(-50%);"></i>
-            </div>
+            {{-- Search & Filter --}}
+            <form method="GET" action="{{ route('katalog.index') }}" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <div style="position:relative; min-width:250px;">
+                    <input type="text" id="katalog-search" placeholder="Cari nama barang..."
+                        style="width:100%; padding:10px 15px 10px 38px; border-radius:25px; border:1px solid #e2e8f0; outline:none; font-size:12px; box-sizing:border-box; font-family:inherit;"
+                        oninput="filterKatalog()" value="{{ $search }}">
+                    <i data-lucide="search" style="width:16px;height:16px;color:#94a3b8;position:absolute;left:14px;top:50%;transform:translateY(-50%);"></i>
+                </div>
+                <select name="kode_kategori" class="form-select" style="width:auto; padding:8px 15px; border-radius:20px; font-size:12px;" onchange="this.form.submit()">
+                    <option value="">Semua Kategori</option>
+                    @foreach($kategoriList as $kat)
+                        <option value="{{ $kat->kode_kategori }}" {{ $filterKategori == $kat->kode_kategori ? 'selected' : '' }}>
+                            {{ $kat->nama_kategori }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
 
             {{-- Toggle View --}}
             <div style="display:flex; background:#f1f5f9; border-radius:8px; padding:4px;">
@@ -77,7 +87,8 @@
                 <div style="flex:1; display:flex; justify-content:center; align-items:center; padding:4px;">
                     @php $itemData = ['id_barang' => $item->id_barang, 'nama_barang' => $item->nama_barang, 'stok_aktual' => $item->stok_aktual, 'satuan' => $item->satuan, 'foto_barang' => $item->foto_barang, 'kode' => $item->kode]; @endphp
                     <button onclick='addToCart(@json($itemData))'
-                        style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;gap:4px;background:#154c79;color:white;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;font-family:inherit;">
+                        @if($item->stok_aktual <= 0) disabled @endif
+                        style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;gap:4px;background:{{ $item->stok_aktual <= 0 ? '#cbd5e1' : '#154c79' }};color:white;border:none;border-radius:4px;cursor:{{ $item->stok_aktual <= 0 ? 'not-allowed' : 'pointer' }};font-size:11px;font-weight:bold;font-family:inherit;">
                         <i data-lucide="plus" style="width:12px;height:12px;"></i> Pilih
                     </button>
                 </div>
@@ -94,16 +105,18 @@
     </div>
 
     {{-- TAMPILAN LIST --}}
-    <div id="katalog-list" style="display:none; background:white; border-radius:12px; border:1px solid #f1f5f9; overflow-x:auto; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
-        <table style="width:100%; border-collapse:collapse; text-align:center; min-width:700px;">
+    <div id="katalog-list" style="display:none; background:white; border-radius:12px; border:1px solid #f1f5f9; overflow-x:auto; overflow-y:auto; max-height:740px; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
+        <table style="width:100%; border-collapse:collapse; text-align:center; min-width:900px;">
             <thead>
-                <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0;">
-                    <th style="padding:15px 20px; font-size:12px; color:#64748b; font-weight:bold; text-transform:uppercase;">Foto</th>
-                    <th style="padding:15px 20px; font-size:12px; color:#64748b; font-weight:bold; text-transform:uppercase;">Kode</th>
-                    <th style="padding:15px 20px; font-size:12px; color:#64748b; font-weight:bold; text-transform:uppercase;">Nama Barang</th>
-                    <th style="padding:15px 20px; font-size:12px; color:#64748b; font-weight:bold; text-transform:uppercase;">Sisa Stok</th>
-                    <th style="padding:15px 20px; font-size:12px; color:#64748b; font-weight:bold; text-transform:uppercase;">Satuan</th>
-                    <th style="padding:15px 20px; font-size:12px; color:#64748b; font-weight:bold; text-transform:uppercase;">Aksi</th>
+                <tr>
+                    <th style="padding:15px 20px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Foto</th>
+                    <th style="padding:15px 20px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Kode Kategori</th>
+                    <th style="padding:15px 20px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Kategori</th>
+                    <th style="padding:15px 20px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Kode Barang</th>
+                    <th style="padding:15px 20px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Nama Barang</th>
+                    <th style="padding:15px 20px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Sisa Stok</th>
+                    <th style="padding:15px 20px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Satuan</th>
+                    <th style="padding:15px 20px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -121,20 +134,23 @@
                             @endif
                         </div>
                     </td>
-                    <td style="padding:12px 20px; vertical-align:middle;"><strong style="font-size:12px; color:#1f4068; font-weight:500;">{{ $item->kode }}</strong></td>
-                    <td style="padding:12px 20px; vertical-align:middle;"><strong style="color:#1f4068; font-size:12px;">{{ $item->nama_barang }}</strong></td>
-                    <td style="padding:12px 20px; vertical-align:middle;"><strong style="color:#1f4068; font-size:12px;">{{ $item->stok_aktual }}</strong></td>
-                    <td style="padding:12px 20px; vertical-align:middle;"><strong style="font-size:12px; color:#1f4068; font-weight:500;">{{ $item->satuan }}</strong></td>
+                    <td style="padding:12px 20px; vertical-align:middle; color:black; font-size:12px;">{{ $item->kode_kategori ?? '-' }}</td>
+                    <td style="padding:12px 20px; vertical-align:middle; color:black; font-size:12px;">{{ $item->nama_kategori ?? '-' }}</td>
+                    <td style="padding:12px 20px; vertical-align:middle; color:black; font-size:12px;">{{ $item->kode ?? '-' }}</td>
+                    <td style="padding:12px 20px; vertical-align:middle; color:black; font-size:12px;">{{ $item->nama_barang }}</td>
+                    <td style="padding:12px 20px; vertical-align:middle; color:black; font-size:12px;">{{ $item->stok_aktual }}</td>
+                    <td style="padding:12px 20px; vertical-align:middle; color:black; font-size:12px;">{{ $item->satuan }}</td>
                     <td style="padding:12px 20px; vertical-align:middle;">
                         @php $itemDataList = ['id_barang' => $item->id_barang, 'nama_barang' => $item->nama_barang, 'stok_aktual' => $item->stok_aktual, 'satuan' => $item->satuan, 'foto_barang' => $item->foto_barang, 'kode' => $item->kode]; @endphp
                         <button onclick='addToCart(@json($itemDataList))'
-                            style="display:inline-flex;align-items:center;gap:6px;padding:8px 15px;background:#154c79;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;font-family:inherit;">
+                            @if($item->stok_aktual <= 0) disabled @endif
+                            style="display:inline-flex;align-items:center;gap:6px;padding:8px 15px;background:{{ $item->stok_aktual <= 0 ? '#cbd5e1' : '#154c79' }};color:white;border:none;border-radius:6px;cursor:{{ $item->stok_aktual <= 0 ? 'not-allowed' : 'pointer' }};font-size:12px;font-weight:bold;font-family:inherit;">
                             <i data-lucide="plus" style="width:14px;height:14px;"></i> Pilih
                         </button>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="6" style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">Tidak ada barang tersedia.</td></tr>
+                <tr><td colspan="8" style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">Tidak ada barang tersedia.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -193,11 +209,12 @@
 <script>
 // ===== CART STATE =====
 let cart = {};
-let viewMode = 'grid';
+let viewMode = localStorage.getItem('katalogViewMode') || 'grid';
 
 // ===== VIEW TOGGLE =====
 function setView(mode) {
     viewMode = mode;
+    localStorage.setItem('katalogViewMode', mode);
     document.getElementById('katalog-grid').style.display = mode === 'grid' ? 'grid' : 'none';
     document.getElementById('katalog-list').style.display = mode === 'list' ? 'block' : 'none';
     document.getElementById('btn-grid').style.background = mode === 'grid' ? 'white' : 'transparent';
@@ -207,6 +224,9 @@ function setView(mode) {
     document.getElementById('btn-list').style.color = mode === 'list' ? '#2563eb' : '#64748b';
     document.getElementById('btn-list').style.boxShadow = mode === 'list' ? '0 2px 5px rgba(0,0,0,0.05)' : 'none';
 }
+
+// Set initial view mode
+setView(viewMode);
 
 // ===== SEARCH FILTER =====
 function filterKatalog() {
@@ -231,6 +251,10 @@ function filterKatalog() {
 
 // ===== CART LOGIC =====
 function addToCart(barang) {
+    if (parseInt(barang.stok_aktual) <= 0) {
+        alert('Barang kosong, tidak dapat diajukan!');
+        return;
+    }
     if (cart[barang.id_barang]) {
         if (cart[barang.id_barang].qty >= parseInt(barang.stok_aktual)) {
             alert('Maksimal stok tercapai!'); return;

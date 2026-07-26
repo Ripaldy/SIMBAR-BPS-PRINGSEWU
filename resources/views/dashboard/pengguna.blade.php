@@ -47,10 +47,10 @@
                        onkeyup="debounceSubmitPengguna(this.form)" style="width: 100%;">
             </div>
 
-            {{-- Semua Divisi --}}
+            {{-- Semua Tim Kerja --}}
             <select name="divisi" class="form-select" style="flex:1; min-width:140px;"
                     onchange="this.form.submit()">
-                <option value="Semua" {{ $divisiFilter==='Semua' ? 'selected' : '' }}>Semua Divisi</option>
+                <option value="Semua" {{ $divisiFilter==='Semua' ? 'selected' : '' }}>Semua Tim Kerja</option>
                 @foreach($divisiList as $div)
                     <option value="{{ $div }}" {{ $divisiFilter===$div ? 'selected' : '' }}>{{ $div }}</option>
                 @endforeach
@@ -75,7 +75,7 @@
         </form>
     </div>
 
-    {{-- FORM UPLOAD CSV PENGGUNA (tersembunyi) --}}
+    {{-- FORM UPLOAD EXCEL PENGGUNA (tersembunyi) --}}
     <form method="POST" action="{{ route('pengguna.uploadExcel') }}" enctype="multipart/form-data" id="csv-form-pengguna" style="display:none;">
         @csrf
         <input type="file" name="file_excel" accept=".csv,.xlsx,.xls" id="csv-input-pengguna" onchange="submitPenggunaCsvForm()">
@@ -83,7 +83,7 @@
 
     {{-- ACTION BUTTONS --}}
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom: -10px;">
-        <a href="{{ route('pengguna.index') }}?download_template=1" style="display:flex; align-items:center; gap:8px; padding:10px 15px; background:white; color:#475569; border:1px solid #cbd5e1; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer; text-decoration:none; transition:0.2s;" title="Unduh Format Excel (CSV)">
+        <a href="{{ route('pengguna.index') }}?download_template=1" style="display:flex; align-items:center; gap:8px; padding:10px 15px; background:white; color:#475569; border:1px solid #cbd5e1; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer; text-decoration:none; transition:0.2s;" title="Unduh Format Excel (.xlsx)">
             <i data-lucide="download" style="width:16px;height:16px;"></i> Template
         </a>
         <button type="button" onclick="document.getElementById('csv-input-pengguna').click()" style="display:flex; align-items:center; gap:8px; padding:10px 15px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; font-size:13px; cursor:pointer; transition:0.2s;">
@@ -95,18 +95,18 @@
     </div>
 
     {{-- TABEL PENGGUNA --}}
-    <div class="card table-container">
+    <div class="card table-container" style="zoom: 90%; max-height:740px; overflow-y:auto; padding:0;">
         <table style="min-width:900px;">
             <thead>
                 <tr>
-                    <th>Foto</th>
-                    <th>Nama Lengkap</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Jabatan</th>
-                    <th>Divisi</th>
-                    <th>Status</th>
-                    <th>Aksi</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Foto</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Nama Lengkap</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Email</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Role</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Jabatan</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Tim Kerja</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Status</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -174,11 +174,11 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
                 <div class="form-group">
                     <label class="form-label">Nama Lengkap</label>
-                    <input type="text" name="nama_lengkap" class="form-control" required>
+                    <input type="text" name="nama_lengkap" class="form-control" required autocomplete="name">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-control" required>
+                    <input type="email" name="email" class="form-control" required autocomplete="email">
                 </div>
 
                 <div class="form-group">
@@ -215,17 +215,17 @@
                     <input type="text" name="jabatan" class="form-control" placeholder="Contoh: Staff IT">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Divisi</label>
+                    <label class="form-label">Tim Kerja</label>
                     <select name="divisi" class="form-control form-select">
-                        <option value="">-- Pilih Divisi --</option>
+                        <option value="">-- Pilih Tim Kerja --</option>
                         @foreach($divisiList as $div)
                             <option value="{{ $div }}">{{ $div }}</option>
                         @endforeach
-                        <option value="_custom">+ Divisi Lain (isi manual)</option>
+                        <option value="_custom">+ Tim Kerja Lain (isi manual)</option>
                     </select>
                     <input type="text" id="add-divisi-custom" name="divisi_custom"
                            class="form-control" style="display:none; margin-top:6px;"
-                           placeholder="Tulis nama divisi baru">
+                           placeholder="Tulis nama tim kerja baru">
                 </div>
             </div>
             <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
@@ -250,7 +250,7 @@
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
                 <div class="form-group">
                     <label class="form-label">Nama Lengkap</label>
-                    <input type="text" name="nama_lengkap" id="edit-nama" class="form-control" required>
+                    <input type="text" name="nama_lengkap" id="edit-nama" class="form-control" required autocomplete="name">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Kata Sandi Baru <small style="color:#94a3b8;">(opsional)</small></label>
@@ -294,18 +294,18 @@
                     <input type="text" name="jabatan" id="edit-jabatan" class="form-control">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Divisi</label>
+                    <label class="form-label">Tim Kerja</label>
                     <select name="divisi" id="edit-divisi-select" class="form-control form-select"
                             onchange="handleEditDivisiChange(this)">
-                        <option value="">-- Pilih Divisi --</option>
+                        <option value="">-- Pilih Tim Kerja --</option>
                         @foreach($divisiList as $div)
                             <option value="{{ $div }}">{{ $div }}</option>
                         @endforeach
-                        <option value="_custom">+ Divisi Lain (isi manual)</option>
+                        <option value="_custom">+ Tim Kerja Lain (isi manual)</option>
                     </select>
                     <input type="text" id="edit-divisi-custom" name="divisi_custom"
                            class="form-control" style="display:none; margin-top:6px;"
-                           placeholder="Tulis nama divisi baru">
+                           placeholder="Tulis nama tim kerja baru">
                 </div>
             </div>
             <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
@@ -448,7 +448,7 @@ function openDeleteUserModal(id, name) {
     openModal('delete-user-modal');
 }
 
-// ===== CSV UPLOAD =====
+// ===== EXCEL UPLOAD =====
 function submitPenggunaCsvForm() {
     const fileInput = document.getElementById('csv-input-pengguna');
     if (fileInput.files && fileInput.files[0]) {

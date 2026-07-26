@@ -40,17 +40,18 @@
         {{-- Mode Tampilan --}}
         <select id="viewMode" onchange="onViewModeChange()"
             style="padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; color:#1f4068; outline:none; cursor:pointer; font-family:inherit;">
-            <option value="grouped">Tabel Gabungan (Per Waktu)</option>
-            <option value="itemized">Tabel Lengkap (Per Barang)</option>
-            <option value="divisi">Tabel Pengeluaran Tim / Divisi</option>
-            <option value="aggregate">Tabel Agregat Barang Keluar</option>
-            <option value="aggregate_masuk">Tabel Agregat Barang Masuk</option>
+            <option value="grouped">History Pengajuan (Gabungan)</option>
+            <option value="itemized">History Pengajuan (Per Barang)</option>
+            <option value="divisi">Tabel Pengeluaran Tim Kerja</option>
+            <option value="aggregate_gabungan">Tabel Agregat Barang</option>
+            <option value="rincian">Laporan Rincian Barang Persediaan</option>
+            <option value="harga_barang">Tabel Harga Per Barang</option>
         </select>
 
         {{-- Filter Divisi (muncul jika mode divisi) --}}
         <select id="divisiFilter" onchange="renderTable()"
             style="display:none; padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; color:#1f4068; outline:none; cursor:pointer; font-family:inherit;">
-            <option value="Semua Divisi">Semua Divisi</option>
+            <option value="Semua Divisi">Semua Tim Kerja</option>
             @foreach($divisiList as $div)
                 <option value="{{ $div }}">{{ $div }}</option>
             @endforeach
@@ -67,10 +68,18 @@
         <select id="aggBulan" onchange="renderTable()"
             style="display:none; padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; color:#1f4068; outline:none; cursor:pointer; font-family:inherit;">
             <option value="Semua">Semua Bulan</option>
-            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
-            <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
-            <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
-            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+            <option value="1" {{ now()->month == 1 ? 'selected' : '' }}>Januari</option>
+            <option value="2" {{ now()->month == 2 ? 'selected' : '' }}>Februari</option>
+            <option value="3" {{ now()->month == 3 ? 'selected' : '' }}>Maret</option>
+            <option value="4" {{ now()->month == 4 ? 'selected' : '' }}>April</option>
+            <option value="5" {{ now()->month == 5 ? 'selected' : '' }}>Mei</option>
+            <option value="6" {{ now()->month == 6 ? 'selected' : '' }}>Juni</option>
+            <option value="7" {{ now()->month == 7 ? 'selected' : '' }}>Juli</option>
+            <option value="8" {{ now()->month == 8 ? 'selected' : '' }}>Agustus</option>
+            <option value="9" {{ now()->month == 9 ? 'selected' : '' }}>September</option>
+            <option value="10" {{ now()->month == 10 ? 'selected' : '' }}>Oktober</option>
+            <option value="11" {{ now()->month == 11 ? 'selected' : '' }}>November</option>
+            <option value="12" {{ now()->month == 12 ? 'selected' : '' }}>Desember</option>
         </select>
     </div>
 
@@ -197,9 +206,9 @@
                 <div style="flex:1;">
                     <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:8px;">Format Dokumen</label>
                     <div style="display:flex; gap:10px;">
-                        <button id="btn-csv" onclick="setExportFormat('csv')"
+                        <button id="btn-csv" onclick="setExportFormat('xlsx')"
                             style="flex:1; padding:10px; border-radius:8px; border:2px solid #27ae60; background:#ecfdf5; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; color:#1f4068; font-weight:bold; font-family:inherit;">
-                            <i data-lucide="file-spreadsheet" style="width:18px;height:18px;color:#27ae60;"></i> CSV
+                            <i data-lucide="file-spreadsheet" style="width:18px;height:18px;color:#27ae60;"></i> Excel
                         </button>
                         <button id="btn-pdf" onclick="setExportFormat('pdf')"
                             style="flex:1; padding:10px; border-radius:8px; border:1px solid #cbd5e1; background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; color:#1f4068; font-weight:bold; font-family:inherit;">
@@ -211,21 +220,16 @@
                     <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:8px;">Saring Tabel</label>
                     <select id="export-tabel" onchange="onExportTabelChange()"
                         style="width:100%; padding:11px; border-radius:8px; border:1px solid #cbd5e1; outline:none; color:#1f4068; font-family:inherit;">
-                        <option value="itemized">Tabel Lengkap (Per Barang)</option>
-                        <option value="divisi">Tabel Pengeluaran Tim / Divisi</option>
-                        <option value="aggregate">Tabel Agregat Barang Keluar</option>
-                        <option value="aggregate_masuk">Tabel Agregat Barang Masuk</option>
-                        <option value="grouped">Tabel Gabungan (Per Waktu)</option>
+                        <option value="grouped">History Pengajuan (Gabungan)</option>
+                        <option value="itemized">History Pengajuan (Per Barang)</option>
+                        <option value="divisi">Tabel Pengeluaran Tim Kerja</option>
+                        <option value="aggregate_gabungan">Tabel Agregat Barang</option>
+                        <option value="rincian">Laporan Rincian Barang Persediaan</option>
+                        <option value="harga_barang">Tabel Harga Per Barang</option>
                     </select>
                 </div>
             </div>
 
-            {{-- Judul PDF (muncul jika format pdf) --}}
-            <div id="pdf-title-wrap" style="display:none;">
-                <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:8px;">Judul Dokumen PDF</label>
-                <input type="text" id="export-judul" value="Laporan Riwayat Pengajuan Inventaris BPS"
-                    style="width:100%; padding:10px 15px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box; outline:none; color:#1f4068; font-family:inherit;">
-            </div>
 
             {{-- Tahun & Bulan --}}
             <div style="display:flex; gap:15px;">
@@ -242,23 +246,45 @@
                     <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:8px;">Pilih Bulan</label>
                     <select id="export-bulan" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; outline:none; color:#1f4068; font-family:inherit;">
                         <option value="Semua">Semua Bulan</option>
-                        <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
-                        <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
-                        <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
-                        <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+                        <option value="1" {{ now()->month == 1 ? 'selected' : '' }}>Januari</option>
+                        <option value="2" {{ now()->month == 2 ? 'selected' : '' }}>Februari</option>
+                        <option value="3" {{ now()->month == 3 ? 'selected' : '' }}>Maret</option>
+                        <option value="4" {{ now()->month == 4 ? 'selected' : '' }}>April</option>
+                        <option value="5" {{ now()->month == 5 ? 'selected' : '' }}>Mei</option>
+                        <option value="6" {{ now()->month == 6 ? 'selected' : '' }}>Juni</option>
+                        <option value="7" {{ now()->month == 7 ? 'selected' : '' }}>Juli</option>
+                        <option value="8" {{ now()->month == 8 ? 'selected' : '' }}>Agustus</option>
+                        <option value="9" {{ now()->month == 9 ? 'selected' : '' }}>September</option>
+                        <option value="10" {{ now()->month == 10 ? 'selected' : '' }}>Oktober</option>
+                        <option value="11" {{ now()->month == 11 ? 'selected' : '' }}>November</option>
+                        <option value="12" {{ now()->month == 12 ? 'selected' : '' }}>Desember</option>
                     </select>
                 </div>
             </div>
 
             {{-- Divisi filter (jika tabel=divisi) --}}
             <div id="export-divisi-wrap" style="display:none;">
-                <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:8px;">Pilih Tim / Divisi</label>
+                <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:8px;">Pilih Tim Kerja</label>
                 <select id="export-divisi" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; outline:none; color:#1f4068; font-family:inherit;">
-                    <option value="Semua Divisi">Semua Divisi</option>
+                    <option value="Semua Divisi">Semua Tim Kerja</option>
                     @foreach($divisiList as $div)
                         <option value="{{ $div }}">{{ $div }}</option>
                     @endforeach
                 </select>
+            </div>
+
+            {{-- Form Judul Khusus (jika tabel=divisi) --}}
+            <div id="export-judul-divisi-wrap" style="display:none; margin-top:15px;">
+                <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:8px;">Ubah Judul Dokumen</label>
+                <input type="text" id="export-judul-divisi" value="TABEL PENGELUARAN TIM KERJA" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box; outline:none; color:#1f4068; font-family:inherit;">
+            </div>
+
+            {{-- Kolom Ekspor --}}
+            <div id="export-kolom-wrap" style="display:none; margin-top:15px;">
+                <label style="font-size:12px; color:#64748b; font-weight:bold; display:block; margin-bottom:8px;">Pilih Kolom Ekspor</label>
+                <div id="export-kolom-container" style="display:flex; flex-wrap:wrap; gap:10px;">
+                    <!-- Checkboxes injected via JS -->
+                </div>
             </div>
         </div>
         <div style="padding:15px 25px; border-top:1px solid #f1f5f9; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc; border-radius:0 0 16px 16px;">
@@ -273,19 +299,21 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/xlsx.full.min.js') }}"></script>
 <script>
 // ============================================================
 //  DATA dari PHP (semua pengajuan yang sudah diproses)
 // ============================================================
-const riwayatMentah = @json($riwayatData);
+const riwayatMentah   = @json($riwayatData);
 const barangMasukMentah = @json($barangMasukData);
+const rincianMentah   = @json($rincianData);
 
 // ============================================================
 //  STATE
 // ============================================================
 let currentPage = 1;
 let itemsPerPage = 10;
-let exportFormat = 'csv';
+let exportFormat = 'xlsx';
 let _debounceTimer;
 
 // ============================================================
@@ -298,7 +326,7 @@ function fmtWaktu(str) {
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function kode(id) { return 'BRG-' + String(id).padStart(3,'0'); }
+function kode(item) { return item.kode_barang ? item.kode_barang : 'BRG-' + String(item.id_barang).padStart(3,'0'); }
 
 function imgCell(foto, alt) {
     const src = foto ? `/uploads/${foto}` : null;
@@ -343,24 +371,8 @@ function getFilteredData() {
 
     let base = riwayatMentah;
 
-    if (mode === 'aggregate_masuk') {
-        base = barangMasukMentah.filter(item => {
-            const d = new Date(item.waktu_masuk);
-            const matchY = aggTahun === 'Semua' || d.getFullYear().toString() === aggTahun;
-            const matchM = aggBulan === 'Semua' || (d.getMonth()+1).toString() === aggBulan;
-            const matchK = !kata || item.nama_barang.toLowerCase().includes(kata);
-            return matchY && matchM && matchK;
-        });
-        return base;
-    }
-
-    if (mode === 'aggregate') {
-        base = base.filter(item => {
-            const d = new Date(item.waktu_pengajuan);
-            const matchY = aggTahun === 'Semua' || d.getFullYear().toString() === aggTahun;
-            const matchM = aggBulan === 'Semua' || (d.getMonth()+1).toString() === aggBulan;
-            return matchY && matchM;
-        });
+    if (mode === 'aggregate_gabungan') {
+        return buildAggregateGabungan(aggTahun, aggBulan, kata);
     }
 
     if (mode === 'divisi') {
@@ -369,6 +381,7 @@ function getFilteredData() {
             const matchK = !kata || item.nama_lengkap.toLowerCase().includes(kata) || item.nama_barang.toLowerCase().includes(kata) || (item.divisi && item.divisi.toLowerCase().includes(kata));
             return matchD && matchK;
         });
+        return buildAggregateDivisi(base);
     } else if (mode === 'grouped') {
         const groups = buildGrouped(base);
         return groups.filter(g => {
@@ -385,28 +398,67 @@ function getFilteredData() {
     return base;
 }
 
-function buildAggregateMasuk(data) {
-    const map = {};
-    data.forEach(curr => {
-        let masuk = parseInt(curr.jumlah_masuk);
-        if (masuk > 0) {
-            if (!map[curr.id_barang]) map[curr.id_barang] = { id_barang: curr.id_barang, foto_barang: curr.foto_barang, nama_barang: curr.nama_barang, satuan: curr.satuan || '-', jumlah: 0 };
-            map[curr.id_barang].jumlah += masuk;
-        }
-    });
-    return Object.values(map).sort((a,b) => b.jumlah - a.jumlah);
-}
-
-function buildAggregate(data) {
+function buildAggregateDivisi(data) {
     const map = {};
     data.forEach(curr => {
         let disetujui = curr.status_pengajuan !== 'rejected' && curr.jumlah_disetujui !== null ? parseInt(curr.jumlah_disetujui) : 0;
         if (disetujui > 0) {
-            if (!map[curr.id_barang]) map[curr.id_barang] = { id_barang: curr.id_barang, foto_barang: curr.foto_barang, nama_barang: curr.nama_barang, satuan: curr.satuan || '-', jumlah_keluar: 0 };
-            map[curr.id_barang].jumlah_keluar += disetujui;
+            const key = (curr.divisi || 'Tanpa Tim') + '_' + curr.id_barang;
+            if (!map[key]) {
+                map[key] = {
+                    divisi: curr.divisi || '-',
+                    id_barang: curr.id_barang,
+                    kode_barang: curr.kode_barang,
+                    kode_kategori: curr.kode_kategori || '-',
+                    nama_kategori: curr.nama_kategori || '-',
+                    foto_barang: curr.foto_barang,
+                    nama_barang: curr.nama_barang,
+                    satuan: curr.satuan || '-',
+                    jumlah: 0
+                };
+            }
+            map[key].jumlah += disetujui;
         }
     });
-    return Object.values(map).sort((a,b) => b.jumlah_keluar - a.jumlah_keluar);
+    return Object.values(map).sort((a,b) => {
+        if (a.divisi === b.divisi) return b.jumlah - a.jumlah;
+        return a.divisi.localeCompare(b.divisi);
+    });
+}
+
+function buildAggregateGabungan(tahun, bulan, kata) {
+    const periodStart = tahun !== 'Semua' ? new Date(parseInt(tahun), 0, 1) : null;
+    const periodEnd   = (() => {
+        if (tahun === 'Semua') return null;
+        if (bulan === 'Semua') return new Date(parseInt(tahun), 11, 31, 23, 59, 59);
+        return new Date(parseInt(tahun), parseInt(bulan), 0, 23, 59, 59);
+    })();
+
+    const result = [];
+    rincianMentah.forEach(b => {
+        if (kata && !b.nama_barang.toLowerCase().includes(kata)) return;
+
+        const masuk = b.barang_masuk.filter(bm => {
+            if (!periodStart) return true;
+            const d = new Date(bm.waktu); return d >= periodStart && d <= periodEnd;
+        }).reduce((s, bm) => s + bm.jumlah_masuk, 0);
+
+        const keluar = b.pengajuan.filter(p => {
+            if (!periodStart) return true;
+            const d = new Date(p.waktu); return d >= periodStart && d <= periodEnd;
+        }).reduce((s, p) => s + p.jumlah_disetujui, 0);
+
+        if (masuk > 0 || keluar > 0) {
+            result.push({
+                ...b,
+                masuk: masuk,
+                keluar: keluar
+            });
+        }
+    });
+
+    // Sort by total movement (masuk + keluar) descending
+    return result.sort((a,b) => (b.masuk + b.keluar) - (a.masuk + a.keluar));
 }
 
 // ============================================================
@@ -418,6 +470,27 @@ function renderTable() {
     const filtered = getFilteredData();
 
     let displayData = filtered;
+
+    // === RINCIAN: render khusus tanpa paginasi ===
+    if (mode === 'rincian') {
+        const tahun = document.getElementById('aggTahun').value;
+        const bulan = document.getElementById('aggBulan').value;
+        document.getElementById('table-container').innerHTML = buildRincianHTML(tahun, bulan);
+        document.getElementById('pagination-bar').style.display = 'none';
+        lucide.createIcons();
+        return;
+    }
+
+    // === HARGA BARANG: render khusus tanpa paginasi ===
+    if (mode === 'harga_barang') {
+        const tahun = document.getElementById('aggTahun').value;
+        const bulan = document.getElementById('aggBulan').value;
+        document.getElementById('table-container').innerHTML = buildHargaBarangHTML(tahun, bulan);
+        document.getElementById('pagination-bar').style.display = 'none';
+        lucide.createIcons();
+        return;
+    }
+
     if (mode === 'aggregate') {
         displayData = buildAggregate(filtered);
     } else if (mode === 'aggregate_masuk') {
@@ -445,7 +518,7 @@ function renderTable() {
             <thead><tr style="${bgHead}">
                 <th style="${thGS}width:15%;">Waktu</th>
                 <th style="${thGS}width:20%;">Pemohon</th>
-                <th style="${thGS}width:20%;">Tim / Divisi</th>
+                <th style="${thGS}width:20%;">Tim Kerja</th>
                 <th style="${thGS}width:15%;">Jumlah Item</th>
                 <th style="${thGS}width:10%;">Detail</th>
                 <th style="${thGS}width:20%;">Status</th>
@@ -481,7 +554,7 @@ function renderTable() {
                 <th style="${thStyle}">Tanggal / Waktu</th>
                 <th style="${thStyle}">Gambar</th>
                 <th style="${thStyle}">Pemohon</th>
-                <th style="${thStyle}">Tim / Divisi</th>
+                <th style="${thStyle}">Tim Kerja</th>
                 <th style="${thStyle}">Kode</th>
                 <th style="${thStyle}">Jenis Barang</th>
                 <th style="${thStyle}">Diminta</th>
@@ -501,7 +574,7 @@ function renderTable() {
                     <td style="padding:12px;border-right:1px solid #e2e8f0;">${imgCell(item.foto_barang, item.nama_barang)}</td>
                     ${tdS(item.nama_lengkap)}
                     ${tdS(item.divisi || '-')}
-                    ${tdS(kode(item.id_barang))}
+                    ${tdS(kode(item))}
                     ${tdS(item.nama_barang)}
                     ${tdS(diminta)}
                     ${tdS(disetujui)}
@@ -515,27 +588,28 @@ function renderTable() {
         // --- TABEL DIVISI ---
         html = `<table style="width:100%;border-collapse:collapse;text-align:center;min-width:1000px;">
             <thead><tr style="${bgHead}">
-                <th style="${thStyle}">Tanggal / Waktu</th>
+                <th style="${thStyle}">No</th>
+                <th style="${thStyle}">Tim Kerja</th>
                 <th style="${thStyle}">Gambar</th>
-                <th style="${thStyle}">Pemohon</th>
-                <th style="${thStyle}">Tim / Divisi</th>
                 <th style="${thStyle}">Kode</th>
-                <th style="${thStyle}">Jenis Barang</th>
-                <th style="${thLast}">Jumlah</th>
+                <th style="${thStyle}">Kode Kategori</th>
+                <th style="${thStyle}">Kategori</th>
+                <th style="${thStyle}">Nama Barang</th>
+                <th style="${thLast}">Jumlah Barang</th>
             </tr></thead><tbody>`;
         if (slice.length === 0) {
-            html += `<tr><td colspan="7" style="padding:40px;color:#94a3b8;font-size:13px;text-align:center;">Tidak ada data pengeluaran divisi.</td></tr>`;
+            html += `<tr><td colspan="8" style="padding:40px;color:#94a3b8;font-size:13px;text-align:center;">Tidak ada data pengeluaran tim kerja.</td></tr>`;
         } else {
-            slice.forEach(item => {
-                const jumlah = item.status_pengajuan === 'rejected' ? 0 : (item.jumlah_disetujui !== null ? parseInt(item.jumlah_disetujui) : 0);
+            slice.forEach((item, index) => {
                 html += `<tr style="border-bottom:1px solid #e2e8f0;">
-                    ${tdS(fmtWaktu(item.waktu_pengajuan))}
-                    <td style="padding:12px;border-right:1px solid #e2e8f0;">${imgCell(item.foto_barang, item.nama_barang)}</td>
-                    ${tdS(item.nama_lengkap)}
-                    ${tdS(item.divisi || '-')}
-                    ${tdS(kode(item.id_barang))}
+                    ${tdS(start + index + 1)}
+                    ${tdS(item.divisi)}
+                    <td style="padding:12px;border-right:1px solid #e2e8f0;vertical-align:middle;">${imgCell(item.foto_barang, item.nama_barang)}</td>
+                    ${tdS(kode(item))}
+                    ${tdS(item.kode_kategori || '-')}
+                    ${tdS(item.nama_kategori || '-')}
                     ${tdS(item.nama_barang)}
-                    ${tdL(jumlah)}
+                    ${tdS(item.jumlah)}
                 </tr>`;
             });
         }
@@ -557,7 +631,7 @@ function renderTable() {
             slice.forEach(item => {
                 html += `<tr style="border-bottom:1px solid #e2e8f0;">
                     <td style="padding:12px;border-right:1px solid #e2e8f0;vertical-align:middle;">${imgCell(item.foto_barang, item.nama_barang)}</td>
-                    ${tdS(kode(item.id_barang))}
+                    ${tdS(kode(item))}
                     ${tdS(item.nama_barang)}
                     ${tdS(item.jumlah_keluar)}
                     ${tdL(item.satuan)}
@@ -581,9 +655,38 @@ function renderTable() {
             slice.forEach(item => {
                 html += `<tr style="border-bottom:1px solid #e2e8f0;">
                     <td style="padding:12px;border-right:1px solid #e2e8f0;vertical-align:middle;">${imgCell(item.foto_barang, item.nama_barang)}</td>
-                    ${tdS(kode(item.id_barang))}
+                    ${tdS(kode(item))}
                     ${tdS(item.nama_barang)}
                     ${tdS(item.jumlah)}
+                    ${tdL(item.satuan)}
+                </tr>`;
+            });
+        }
+        html += `</tbody></table>`;
+    } else if (mode === 'aggregate_gabungan') {
+        html = `<table style="width:100%;border-collapse:collapse;text-align:center;min-width:950px;">
+            <thead><tr style="${bgHead}">
+                <th style="${thStyle}">Gambar</th>
+                <th style="${thStyle}">Kode</th>
+                <th style="${thStyle}">Kode Kategori</th>
+                <th style="${thStyle}">Kategori</th>
+                <th style="${thStyle}">Nama Barang</th>
+                <th style="${thStyle}">Jumlah Masuk</th>
+                <th style="${thStyle}">Jumlah Keluar</th>
+                <th style="${thLast}">Satuan</th>
+            </tr></thead><tbody>`;
+        if (displayData.length === 0) {
+            html += `<tr><td colspan="8" style="padding:40px;color:#94a3b8;font-size:13px;text-align:center;">Tidak ada data agregat pada periode ini.</td></tr>`;
+        } else {
+            slice.forEach(item => {
+                html += `<tr style="border-bottom:1px solid #e2e8f0;">
+                    <td style="padding:12px;border-right:1px solid #e2e8f0;vertical-align:middle;">${imgCell(item.foto_barang, item.nama_barang)}</td>
+                    ${tdS(kode(item))}
+                    ${tdS(item.kode_kategori || '-')}
+                    ${tdS(item.nama_kategori || '-')}
+                    ${tdS(item.nama_barang)}
+                    ${tdS(item.masuk)}
+                    ${tdS(item.keluar)}
                     ${tdL(item.satuan)}
                 </tr>`;
             });
@@ -610,11 +713,261 @@ function renderTable() {
     lucide.createIcons();
 }
 
+// ============================================================
+//  BUILD RINCIAN BARANG PERSEDIAAN
+// ============================================================
+const BULAN_NAMES = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+function fmtRupiah(n) {
+    if (!n || n === 0) return '0';
+    return new Intl.NumberFormat('id-ID').format(n);
+}
+
+function buildRincianHTML(tahun, bulan) {
+    // Filter mutasi berdasarkan periode
+    const periodStart = tahun !== 'Semua' ? new Date(parseInt(tahun), 0, 1) : null;   // 1 Jan tahun
+    const periodEnd   = (() => {
+        if (tahun === 'Semua') return null;
+        if (bulan === 'Semua') return new Date(parseInt(tahun), 11, 31, 23, 59, 59);
+        return new Date(parseInt(tahun), parseInt(bulan), 0, 23, 59, 59); // akhir bulan
+    })();
+
+    // Group barang by kategori
+    const kategoriMap = {};
+    rincianMentah.forEach(b => {
+        const kat = b.nama_kategori || 'LAINNYA';
+        if (!kategoriMap[kat]) kategoriMap[kat] = [];
+        kategoriMap[kat].push(b);
+    });
+
+    const periodLabel = tahun === 'Semua' ? 'Semua Periode'
+        : (bulan === 'Semua' ? `01-01-${tahun} s.d. 31-12-${tahun}`
+            : `01-01-${tahun} s.d. ${String(new Date(parseInt(tahun), parseInt(bulan), 0).getDate()).padStart(2,'0')}-${String(bulan).padStart(2,'0')}-${tahun}`);
+
+    const thS = 'padding:8px 6px;font-size:11px;border:1px solid #ccc;text-align:center;font-weight:bold;background:#f1f5f9;text-transform:uppercase;';
+    const tdN = 'padding:6px;font-size:11px;border:1px solid #ddd;text-align:right;';
+    const tdC = 'padding:6px;font-size:11px;border:1px solid #ddd;text-align:center;';
+    const tdL = 'padding:6px;font-size:11px;border:1px solid #ddd;text-align:left;';
+
+    let html = `
+    <div style="padding:20px;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead>
+                <tr>
+                    <td colspan="9" style="border:none !important; padding:30px 0 15px 0 !important; text-align:left;">
+                        <div style="text-align:center;margin-bottom:18px;">
+                            <h2 style="margin:0;font-size:15px;font-weight:bold;color:#000;">LAPORAN RINCIAN BARANG PERSEDIAAN</h2>
+                            <p style="margin:4px 0;font-size:12px;color:#333;"><b>UNTUK PERIODE YANG BERAKHIR TANGGAL: ${periodLabel.split(' s.d. ')[1] || '-'}</b></p>
+                            <p style="margin:0;font-size:12px;color:#333;"><b>TAHUN ANGGARAN: ${tahun === 'Semua' ? 'SEMUA' : tahun}</b></p>
+                        </div>
+                        <p style="font-size:11px;color:#333;margin:4px 0;">NAMA UAKPB: BADAN PUSAT STATISK KABUPATEN PRINGSEWU</p>
+                        <p style="font-size:11px;color:#333;margin:4px 0 0 0;">PERIODE: ${periodLabel}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th rowspan="2" style="${thS}width:80px;">KODE</th>
+                    <th rowspan="2" style="${thS}width:200px;">URAIAN</th>
+                    <th colspan="2" style="${thS}">NILAI S/D AWAL PERIODE</th>
+                    <th colspan="3" style="${thS}">MUTASI</th>
+                    <th colspan="2" style="${thS}">NILAI S/D AKHIR PERIODE</th>
+                </tr>
+                <tr>
+                    <th style="${thS}">JUMLAH</th>
+                    <th style="${thS}">RUPIAH</th>
+                    <th style="${thS}">MASUK</th>
+                    <th style="${thS}">KELUAR</th>
+                    <th style="${thS}">JUMLAH</th>
+                    <th style="${thS}">JUMLAH</th>
+                    <th style="${thS}">RUPIAH</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    Object.keys(kategoriMap).forEach(kat => {
+        const items = kategoriMap[kat];
+        let katTotalAwalRp = 0, katTotalAkhirRp = 0;
+
+        // Compute per-item
+        const computed = items.map(b => {
+            // Masuk dalam periode
+            const masukPeriode = b.barang_masuk.filter(bm => {
+                if (!periodStart) return true;
+                const d = new Date(bm.waktu);
+                return d >= periodStart && d <= periodEnd;
+            }).reduce((s, bm) => s + bm.jumlah_masuk, 0);
+
+            // Keluar dalam periode
+            const keluarPeriode = b.pengajuan.filter(p => {
+                if (!periodStart) return true;
+                const d = new Date(p.waktu);
+                return d >= periodStart && d <= periodEnd;
+            }).reduce((s, p) => s + p.jumlah_disetujui, 0);
+
+            // ===== LOGIKA STOK YANG BENAR =====
+            // Rekonstruksi stokAkhirPeriode:
+            //   Stok saat ini = stokAkhirPeriode + masukSetelah - keluarSetelah
+            //   → stokAkhirPeriode = stok_aktual - masukSetelah + keluarSetelah
+            let stokAkhirPeriode;
+            if (!periodEnd) {
+                // Semua periode → gunakan stok aktual sekarang
+                stokAkhirPeriode = b.stok_aktual;
+            } else {
+                const masukSetelah = b.barang_masuk.filter(bm => new Date(bm.waktu) > periodEnd)
+                    .reduce((s, bm) => s + bm.jumlah_masuk, 0);
+                const keluarSetelah = b.pengajuan.filter(p => new Date(p.waktu) > periodEnd)
+                    .reduce((s, p) => s + p.jumlah_disetujui, 0);
+                stokAkhirPeriode = b.stok_aktual - masukSetelah + keluarSetelah;
+            }
+
+            // stokAwalPeriode = stokAkhirPeriode - masuk + keluar (dalam periode)
+            const stokAwalPeriode = stokAkhirPeriode - masukPeriode + keluarPeriode;
+            const net = masukPeriode - keluarPeriode;
+
+            const harga    = b.harga_satuan || 0;
+            const rupAwal  = stokAwalPeriode > 0 ? stokAwalPeriode * harga : 0;
+            const rupAkhir = stokAkhirPeriode > 0 ? stokAkhirPeriode * harga : 0;
+
+            return { ...b, stokAwal: stokAwalPeriode, masukPeriode, keluarPeriode, net, stokAkhir: stokAkhirPeriode, rupAwal, rupAkhir, harga };
+        });
+
+        computed.forEach(c => { katTotalAwalRp += c.rupAwal; katTotalAkhirRp += c.rupAkhir; });
+
+        // Kategori header row
+        html += `<tr style="background:#f0f4ff;">
+            <td style="${tdC}"></td>
+            <td style="${tdL}">
+                <span style="font-weight:bold;color:#1a56a0;font-size:11px;">${kat}</span>
+            </td>
+            <td colspan="2" style="${tdN}color:#1a56a0;font-weight:bold;">${katTotalAwalRp > 0 ? fmtRupiah(katTotalAwalRp) : ''}</td>
+            <td colspan="3" style="${tdN}"></td>
+            <td colspan="2" style="${tdN}color:#1a56a0;font-weight:bold;">${katTotalAkhirRp > 0 ? fmtRupiah(katTotalAkhirRp) : ''}</td>
+        </tr>`;
+
+        // Item rows
+        computed.forEach(c => {
+            html += `<tr>
+                <td style="${tdC}font-family:monospace;">${c.kode_barang || '-'}</td>
+                <td style="${tdL}">${c.nama_barang}</td>
+                <td style="${tdN}">${c.stokAwal > 0 ? c.stokAwal : 0}</td>
+                <td style="${tdN}">${c.rupAwal > 0 ? fmtRupiah(c.rupAwal) : 0}</td>
+                <td style="${tdN}">${c.masukPeriode > 0 ? c.masukPeriode : 0}</td>
+                <td style="${tdN}">${c.keluarPeriode > 0 ? c.keluarPeriode : 0}</td>
+                <td style="${tdN}">${c.net}</td>
+                <td style="${tdN}">${c.stokAkhir > 0 ? c.stokAkhir : 0}</td>
+                <td style="${tdN}">${c.rupAkhir > 0 ? fmtRupiah(c.rupAkhir) : 0}</td>
+            </tr>`;
+        });
+    });
+
+    html += `</tbody></table></div>`;
+    return html;
+}
+
+// ============================================================
+//  BUILD HARGA PER BARANG
+// ============================================================
+function buildHargaBarangHTML(tahun, bulan) {
+    const periodEnd = (() => {
+        if (tahun === 'Semua') return new Date();
+        if (bulan === 'Semua') return new Date(parseInt(tahun), 11, 31, 23, 59, 59);
+        return new Date(parseInt(tahun), parseInt(bulan), 0, 23, 59, 59);
+    })();
+
+    const pad2 = n => String(n).padStart(2, '0');
+    const tglLabel = `${pad2(periodEnd.getDate())}-${pad2(periodEnd.getMonth()+1)}-${periodEnd.getFullYear()}`;
+    const tahunLabel = tahun === 'Semua' ? new Date().getFullYear() : tahun;
+
+    // Group by kode_kategori → { nama_kategori, kode_kategori, items[] }
+    const kategoriMap = {};
+    rincianMentah.forEach(b => {
+        const katKey = b.kode_kategori || '000000';
+        if (!kategoriMap[katKey]) {
+            kategoriMap[katKey] = {
+                kode_kategori: b.kode_kategori || '-',
+                nama_kategori: b.nama_kategori || 'LAINNYA',
+                items: []
+            };
+        }
+        kategoriMap[katKey].items.push(b);
+    });
+
+    // Account code mapping — prefix digits of kode_kategori map to account group
+    const akunMap = {};
+    Object.values(kategoriMap).forEach(kat => {
+        // Use first 6 chars of kode_kategori as akun group, or '117111' as default
+        const akunKode = kat.kode_kategori.length >= 6 ? kat.kode_kategori.substring(0, 6) : '117111';
+        if (!akunMap[akunKode]) akunMap[akunKode] = { nama: 'Barang Konsumsi', kategori: [] };
+        akunMap[akunKode].kategori.push(kat);
+    });
+
+    const thS = 'padding:8px 6px;font-size:11px;border:1px solid #ccc;text-align:center;font-weight:bold;background:#f1f5f9;text-transform:uppercase;';
+    const tdN = 'padding:6px 8px;font-size:11px;border:1px solid #ddd;text-align:right;';
+    const tdC = 'padding:6px 8px;font-size:11px;border:1px solid #ddd;text-align:right;font-family:monospace;';
+    const tdL = 'padding:6px 8px;font-size:11px;border:1px solid #ddd;text-align:left;';
+
+    let html = `
+    <div style="padding:20px;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead>
+                <tr>
+                    <td colspan="3" style="border:none !important; padding:30px 0 15px 0 !important;">
+                        <div style="text-align:center;margin-bottom:12px;">
+                            <h2 style="margin:0;font-size:16px;font-weight:bold;color:#000;">LAPORAN PERSEDIAAN</h2>
+                            <p style="margin:4px 0;font-size:12px;font-weight:bold;color:#000;">UNTUK PERIODE YANG BERAKHIR TANGGAL ${tglLabel}</p>
+                            <p style="margin:0;font-size:12px;font-weight:bold;color:#000;">TAHUN ANGGARAN : ${tahunLabel}</p>
+                        </div>
+                        <p style="font-size:11px;color:#333;margin:4px 0;text-align:left;">NAMA UAKPB : BADAN PUSAT STATISTIK KABUPATEN PRINGSEWU</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th style="${thS}width:120px;">KODE</th>
+                    <th style="${thS}">U R A I A N</th>
+                    <th style="${thS}width:140px;">NILAI PER<br>${tglLabel}</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    Object.entries(akunMap).forEach(([akunKode, akun]) => {
+        // Level 1: Account group row removed as per request
+
+        akun.kategori.forEach(kat => {
+            let katTotal = 0;
+            kat.items.forEach(b => {
+                const stok = b.stok_aktual || 0;
+                const harga = b.harga_satuan || 0;
+                katTotal += stok > 0 ? stok * harga : 0;
+            });
+
+            // Level 2: Category row (blue text)
+            html += `<tr>
+                <td style="${tdC}color:#1a56a0;">${kat.kode_kategori}</td>
+                <td style="${tdL}color:#1a56a0;font-weight:normal;">${kat.nama_kategori}</td>
+                <td style="${tdN}color:#1a56a0;">${katTotal > 0 ? fmtRupiah(katTotal) : ''}</td>
+            </tr>`;
+
+            // Level 3: Item rows
+            kat.items.forEach(b => {
+                const stok = b.stok_aktual || 0;
+                const harga = b.harga_satuan || 0;
+                const nilai = stok > 0 ? stok * harga : 0;
+                html += `<tr>
+                    <td style="${tdC}">${b.kode_barang || '-'}</td>
+                    <td style="${tdL}">${b.nama_barang}</td>
+                    <td style="${tdN}">${fmtRupiah(nilai)}</td>
+                </tr>`;
+            });
+        });
+    });
+
+    html += `</tbody></table></div>`;
+    return html;
+}
+
 function onViewModeChange() {
     const mode = document.getElementById('viewMode').value;
     document.getElementById('divisiFilter').style.display  = mode === 'divisi' ? 'block' : 'none';
-    document.getElementById('aggTahun').style.display      = (mode === 'aggregate' || mode === 'aggregate_masuk') ? 'block' : 'none';
-    document.getElementById('aggBulan').style.display      = (mode === 'aggregate' || mode === 'aggregate_masuk') ? 'block' : 'none';
+    document.getElementById('aggTahun').style.display      = (mode === 'aggregate_gabungan' || mode === 'rincian' || mode === 'harga_barang') ? 'block' : 'none';
+    document.getElementById('aggBulan').style.display      = (mode === 'aggregate_gabungan' || mode === 'rincian' || mode === 'harga_barang') ? 'block' : 'none';
     currentPage = 1;
     renderTable();
 }
@@ -652,7 +1005,7 @@ function openDetailModal(group) {
         rows += `<tr style="border-bottom:1px solid #f1f5f9;">
             <td style="padding:10px;"><div style="width:35px;height:35px;margin:0 auto;overflow:hidden;border-radius:4px;border:1px solid #e2e8f0;">${imgHtml}</div></td>
             <td style="padding:10px;font-size:12px;color:#000;text-align:center;font-weight:normal;">${item.nama_barang}</td>
-            <td style="padding:10px;font-size:12px;color:#000;font-weight:normal;">${kode(item.id_barang)}</td>
+            <td style="padding:10px;font-size:12px;color:#000;font-weight:normal;">${kode(item)}</td>
             <td style="padding:10px;font-size:12px;color:#000;font-weight:normal;">${diminta}</td>
             <td style="padding:10px;font-size:12px;color:#000;font-weight:normal;">${disetujui}</td>
             <td style="padding:10px;font-size:12px;color:#000;font-weight:normal;">${ditolak}</td>
@@ -674,16 +1027,37 @@ function openDetailModal(group) {
 // ============================================================
 function setExportFormat(fmt) {
     exportFormat = fmt;
-    document.getElementById('btn-csv').style.border    = fmt === 'csv' ? '2px solid #27ae60' : '1px solid #cbd5e1';
-    document.getElementById('btn-csv').style.background= fmt === 'csv' ? '#ecfdf5' : 'white';
+    document.getElementById('btn-csv').style.border    = fmt === 'xlsx' ? '2px solid #27ae60' : '1px solid #cbd5e1';
+    document.getElementById('btn-csv').style.background= fmt === 'xlsx' ? '#ecfdf5' : 'white';
     document.getElementById('btn-pdf').style.border    = fmt === 'pdf' ? '2px solid #e74c3c' : '1px solid #cbd5e1';
     document.getElementById('btn-pdf').style.background= fmt === 'pdf' ? '#fef2f2' : 'white';
-    document.getElementById('pdf-title-wrap').style.display = fmt === 'pdf' ? 'block' : 'none';
 }
+
+const exportColumnsConfig = {
+    'grouped': ['Waktu Pengajuan', 'Pemohon', 'Tim Kerja', 'Total Item', 'Status'],
+    'itemized': ['Waktu', 'Pemohon', 'Tim Kerja', 'Kode', 'Nama Barang', 'Diminta', 'Disetujui', 'Ditolak'],
+    'aggregate_gabungan': ['Kode', 'Kode Kategori', 'Kategori', 'Nama Barang', 'Mutasi Masuk', 'Mutasi Keluar', 'Satuan']
+};
 
 function onExportTabelChange() {
     const tabel = document.getElementById('export-tabel').value;
     document.getElementById('export-divisi-wrap').style.display = tabel === 'divisi' ? 'block' : 'none';
+    document.getElementById('export-judul-divisi-wrap').style.display = tabel === 'divisi' ? 'block' : 'none';
+
+    const kolomWrap = document.getElementById('export-kolom-wrap');
+    const kolomContainer = document.getElementById('export-kolom-container');
+
+    if (exportColumnsConfig[tabel]) {
+        kolomWrap.style.display = 'block';
+        kolomContainer.innerHTML = exportColumnsConfig[tabel].map((col, idx) => `
+            <label style="font-size:12px; color:#1f4068; display:flex; align-items:center; gap:5px; background:#f1f5f9; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                <input type="checkbox" class="export-col-cb" value="${idx}" checked> ${col}
+            </label>
+        `).join('');
+    } else {
+        kolomWrap.style.display = 'none';
+        kolomContainer.innerHTML = '';
+    }
 }
 
 function executeExport() {
@@ -691,11 +1065,311 @@ function executeExport() {
     const bulan  = document.getElementById('export-bulan').value;
     const tabel  = document.getElementById('export-tabel').value;
     const divisi = document.getElementById('export-divisi').value;
-    const judul  = document.getElementById('export-judul').value;
+    let judul = "LAPORAN RIWAYAT PENGAJUAN INVENTARIS BPS";
+    
+    if (tabel === 'aggregate_gabungan') judul = "TABEL AGREGAT BARANG";
+    else if (tabel === 'divisi') {
+        const customJudul = document.getElementById('export-judul-divisi').value.trim();
+        judul = customJudul ? customJudul : "TABEL PENGELUARAN TIM KERJA";
+    }
+    else if (tabel === 'grouped') judul = "HISTORY PENGAJUAN (GABUNGAN)";
+    else if (tabel === 'itemized') judul = "HISTORY PENGAJUAN (PER BARANG)";
+
+    let selectedColIndices = null;
+    if (exportColumnsConfig[tabel]) {
+        const cbs = document.querySelectorAll('.export-col-cb');
+        selectedColIndices = Array.from(cbs).filter(cb => cb.checked).map(cb => parseInt(cb.value));
+        if (selectedColIndices.length === 0) {
+            alert('Silakan pilih minimal satu kolom untuk diekspor.');
+            return;
+        }
+    }
+
+    // === RINCIAN: ekspor khusus ===
+    if (tabel === 'rincian') {
+        const periodStart = tahun !== 'Semua' ? new Date(parseInt(tahun), 0, 1) : null;
+        const periodEnd   = (() => {
+            if (tahun === 'Semua') return null;
+            if (bulan === 'Semua') return new Date(parseInt(tahun), 11, 31, 23, 59, 59);
+            return new Date(parseInt(tahun), parseInt(bulan), 0, 23, 59, 59);
+        })();
+        const periodLabel = tahun === 'Semua' ? 'Semua Periode'
+            : (bulan === 'Semua' ? `01-01-${tahun} s.d. 31-12-${tahun}`
+                : `01-01-${tahun} s.d. ${String(new Date(parseInt(tahun), parseInt(bulan), 0).getDate()).padStart(2,'0')}-${String(bulan).padStart(2,'0')}-${tahun}`);
+
+        const kategoriMap = {};
+        rincianMentah.forEach(b => {
+            const kat = b.nama_kategori || 'LAINNYA';
+            if (!kategoriMap[kat]) kategoriMap[kat] = [];
+            kategoriMap[kat].push(b);
+        });
+
+        const aoa = [];
+        aoa.push(['LAPORAN RINCIAN BARANG PERSEDIAAN']);
+        aoa.push([`PERIODE: ${periodLabel}`]);
+        aoa.push([]);
+        const headerRow = ['KODE', 'URAIAN', 'NILAI AWAL - JUMLAH', 'NILAI AWAL - RUPIAH', 'MUTASI MASUK', 'MUTASI KELUAR', 'MUTASI JUMLAH', 'NILAI AKHIR - JUMLAH', 'NILAI AKHIR - RUPIAH'];
+        aoa.push(headerRow);
+
+        const merges = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },
+        ];
+
+        Object.keys(kategoriMap).forEach(kat => {
+            const items = kategoriMap[kat];
+            let katTotalAwalRp = 0, katTotalAkhirRp = 0;
+
+            const computed = items.map(b => {
+                const masukPeriode = b.barang_masuk.filter(bm => {
+                    if (!periodStart) return true;
+                    const d = new Date(bm.waktu); return d >= periodStart && d <= periodEnd;
+                }).reduce((s, bm) => s + bm.jumlah_masuk, 0);
+                const keluarPeriode = b.pengajuan.filter(p => {
+                    if (!periodStart) return true;
+                    const d = new Date(p.waktu); return d >= periodStart && d <= periodEnd;
+                }).reduce((s, p) => s + p.jumlah_disetujui, 0);
+
+                let stokAkhirPeriode;
+                if (!periodEnd) {
+                    stokAkhirPeriode = b.stok_aktual;
+                } else {
+                    const masukSetelah  = b.barang_masuk.filter(bm => new Date(bm.waktu) > periodEnd)
+                        .reduce((s, bm) => s + bm.jumlah_masuk, 0);
+                    const keluarSetelah = b.pengajuan.filter(p => new Date(p.waktu) > periodEnd)
+                        .reduce((s, p) => s + p.jumlah_disetujui, 0);
+                    stokAkhirPeriode = b.stok_aktual - masukSetelah + keluarSetelah;
+                }
+                const stokAwalPeriode = stokAkhirPeriode - masukPeriode + keluarPeriode;
+
+                const harga = b.harga_satuan || 0;
+                const rupAwal = stokAwalPeriode > 0 ? stokAwalPeriode * harga : 0;
+                const rupAkhir = stokAkhirPeriode > 0 ? stokAkhirPeriode * harga : 0;
+
+                return { ...b, stokAwalPeriode, masukPeriode, keluarPeriode, net: masukPeriode - keluarPeriode, stokAkhirPeriode, rupAwal, rupAkhir, harga };
+            });
+
+            computed.forEach(c => { katTotalAwalRp += c.rupAwal; katTotalAkhirRp += c.rupAkhir; });
+
+            // Kategori header row
+            const rIdx = aoa.length;
+            aoa.push(['', kat, katTotalAwalRp > 0 ? katTotalAwalRp : '', '', '', '', '', katTotalAkhirRp > 0 ? katTotalAkhirRp : '', '']);
+            merges.push({ s: { r: rIdx, c: 2 }, e: { r: rIdx, c: 3 } });
+            merges.push({ s: { r: rIdx, c: 4 }, e: { r: rIdx, c: 6 } });
+            merges.push({ s: { r: rIdx, c: 7 }, e: { r: rIdx, c: 8 } });
+
+            computed.forEach(c => {
+                aoa.push([
+                    c.kode_barang || '-', c.nama_barang,
+                    c.stokAwalPeriode > 0 ? c.stokAwalPeriode : 0,
+                    c.rupAwal,
+                    c.masukPeriode, c.keluarPeriode, c.net,
+                    c.stokAkhirPeriode > 0 ? c.stokAkhirPeriode : 0,
+                    c.rupAkhir
+                ]);
+            });
+        });
+
+        if (exportFormat === 'xlsx') {
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            ws['!merges'] = merges;
+            ws['!cols'] = [{ wch: 14 }, { wch: 38 }, { wch: 16 }, { wch: 20 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 20 }];
+
+            const bAll_r = { top:{style:'thin',color:{rgb:'AAAAAA'}}, bottom:{style:'thin',color:{rgb:'AAAAAA'}}, left:{style:'thin',color:{rgb:'AAAAAA'}}, right:{style:'thin',color:{rgb:'AAAAAA'}} };
+            const bMed_r = { top:{style:'medium',color:{rgb:'154C79'}}, bottom:{style:'medium',color:{rgb:'154C79'}}, left:{style:'medium',color:{rgb:'154C79'}}, right:{style:'medium',color:{rgb:'154C79'}} };
+
+            // Title rows
+            if (ws['A1']) ws['A1'].s = { font:{bold:true,sz:14,color:{rgb:'1A3558'}}, alignment:{horizontal:'center',vertical:'center'} };
+            if (ws['A2']) ws['A2'].s = { font:{bold:true,sz:11,color:{rgb:'333333'}}, alignment:{horizontal:'center',vertical:'center'} };
+
+            // Column header row (row index 3 = 0-based)
+            headerRow.forEach((_, ci) => {
+                const addr = XLSX.utils.encode_cell({ r: 3, c: ci });
+                if (ws[addr]) ws[addr].s = {
+                    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 },
+                    fill: { fgColor: { rgb: '154C79' } },
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                    border: bMed_r
+                };
+            });
+
+            // Data rows (row index 4 onwards)
+            for (let ri = 4; ri < aoa.length; ri++) {
+                const rowArr = aoa[ri];
+                if (!rowArr) continue;
+                const isKatRow = rowArr[0] === ''; // kategori rows have empty first cell
+                for (let ci = 0; ci < headerRow.length; ci++) {
+                    const addr = XLSX.utils.encode_cell({ r: ri, c: ci });
+                    if (!ws[addr]) ws[addr] = { t: 'z' };
+                    const isNumCol = ci >= 2;
+                    ws[addr].s = isKatRow ? {
+                        font: { bold: true, color: { rgb: '1A56A0' }, sz: 10 },
+                        fill: { fgColor: { rgb: 'EDF3FC' } },
+                        alignment: { horizontal: isNumCol ? 'right' : 'left', vertical: 'center' },
+                        border: bAll_r
+                    } : {
+                        font: { sz: 10 },
+                        fill: { fgColor: { rgb: ri % 2 === 0 ? 'FFFFFF' : 'F9FAFB' } },
+                        alignment: { horizontal: isNumCol ? 'right' : (ci === 0 ? 'right' : 'left'), vertical: 'center' },
+                        border: bAll_r
+                    };
+                    if (isNumCol && ws[addr].t === 'n') ws[addr].z = '#,##0';
+                }
+            }
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Rincian');
+            XLSX.writeFile(wb, `Laporan_Rincian_${tahun}_${bulan}.xlsx`);
+        } else {
+            const pWin = window.open('', '_blank');
+            const contentHTML = buildRincianHTML(tahun, bulan);
+            const html = `<html><head><title>${judul}</title><style>
+                body{font-family:Helvetica,Arial,sans-serif;padding:20px;color:#000;margin:0;}
+                table{width:100%;border-collapse:collapse;font-size:11px;}
+                th,td{border:1px solid #000 !important;color:#000 !important;font-size:11px !important;}
+                @media print {
+                    @page { size: landscape; margin: 0; }
+                    body { padding: 0 20px; }
+                }
+            </style></head>
+            <body onload="window.print();">
+                ${contentHTML}
+            </body></html>`;
+            pWin.document.write(html);
+            pWin.document.close();
+        }
+
+        closeModal('export-modal');
+        return;
+    }
+
+    // === HARGA BARANG: ekspor khusus ===
+    if (tabel === 'harga_barang') {
+        if (exportFormat === 'pdf') {
+            const pWin = window.open('', '_blank');
+            const contentHTML = buildHargaBarangHTML(tahun, bulan);
+            const html = `<html><head><title>Tabel Harga Per Barang</title><style>
+                body{font-family:Helvetica,Arial,sans-serif;padding:20px;color:#000;margin:0;}
+                table{width:100%;border-collapse:collapse;font-size:11px;}
+                th,td{border:1px solid #000 !important;font-size:11px !important;}
+                @media print {
+                    @page { margin: 0; }
+                    body { padding: 0 20px; }
+                }
+            </style></head>
+            <body onload="window.print();">
+                ${contentHTML}
+            </body></html>`;
+            pWin.document.write(html);
+            pWin.document.close();
+        } else {
+            // Excel Export
+            const periodEnd_hb = (() => {
+                if (tahun === 'Semua') return new Date();
+                if (bulan === 'Semua') return new Date(parseInt(tahun), 11, 31, 23, 59, 59);
+                return new Date(parseInt(tahun), parseInt(bulan), 0, 23, 59, 59);
+            })();
+            const pad2_hb = n => String(n).padStart(2, '0');
+            const tglLabel_hb = `${pad2_hb(periodEnd_hb.getDate())}-${pad2_hb(periodEnd_hb.getMonth()+1)}-${periodEnd_hb.getFullYear()}`;
+            const tahunLabel_hb = tahun === 'Semua' ? new Date().getFullYear() : tahun;
+
+            const kategoriMap_hb = {};
+            rincianMentah.forEach(b => {
+                const katKey = b.kode_kategori || '000000';
+                if (!kategoriMap_hb[katKey]) kategoriMap_hb[katKey] = { kode_kategori: b.kode_kategori || '-', nama_kategori: b.nama_kategori || 'LAINNYA', items: [] };
+                kategoriMap_hb[katKey].items.push(b);
+            });
+
+            const aoa_hb = [];
+            aoa_hb.push(['LAPORAN PERSEDIAAN']);
+            aoa_hb.push([`UNTUK PERIODE YANG BERAKHIR TANGGAL ${tglLabel_hb}`]);
+            aoa_hb.push([`TAHUN ANGGARAN : ${tahunLabel_hb}`]);
+            aoa_hb.push([]);
+            aoa_hb.push(['NAMA UAKPB : BADAN PUSAT STATISTIK KABUPATEN PRINGSEWU']);
+            aoa_hb.push([]);
+            const headerRow_hb = ['KODE', 'URAIAN', `NILAI PER ${tglLabel_hb}`];
+            aoa_hb.push(headerRow_hb);
+
+            const merges_hb = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 2 } },
+                { s: { r: 4, c: 0 }, e: { r: 4, c: 2 } }
+            ];
+
+            Object.values(kategoriMap_hb).forEach(kat => {
+                let katTotal = 0;
+                kat.items.forEach(b => {
+                    const stok = b.stok_aktual || 0;
+                    const harga = b.harga_satuan || 0;
+                    katTotal += stok > 0 ? stok * harga : 0;
+                });
+                aoa_hb.push([kat.kode_kategori, kat.nama_kategori, katTotal > 0 ? katTotal : 0]);
+                kat.items.forEach(b => {
+                    const stok = b.stok_aktual || 0;
+                    const harga = b.harga_satuan || 0;
+                    const nilai = stok > 0 ? stok * harga : 0;
+                    aoa_hb.push([b.kode_barang || '-', b.nama_barang, nilai]);
+                });
+            });
+
+            const ws_hb = XLSX.utils.aoa_to_sheet(aoa_hb);
+            ws_hb['!merges'] = merges_hb;
+            ws_hb['!cols'] = [{ wch: 18 }, { wch: 48 }, { wch: 25 }];
+
+            const bAll_hb = { top:{style:'thin',color:{rgb:'AAAAAA'}}, bottom:{style:'thin',color:{rgb:'AAAAAA'}}, left:{style:'thin',color:{rgb:'AAAAAA'}}, right:{style:'thin',color:{rgb:'AAAAAA'}} };
+            const bMed_hb = { top:{style:'medium',color:{rgb:'154C79'}}, bottom:{style:'medium',color:{rgb:'154C79'}}, left:{style:'medium',color:{rgb:'154C79'}}, right:{style:'medium',color:{rgb:'154C79'}} };
+
+            if (ws_hb['A1']) ws_hb['A1'].s = { font:{bold:true,sz:14,color:{rgb:'1A3558'}}, alignment:{horizontal:'center',vertical:'center'} };
+            if (ws_hb['A2']) ws_hb['A2'].s = { font:{bold:true,sz:11,color:{rgb:'333333'}}, alignment:{horizontal:'center',vertical:'center'} };
+            if (ws_hb['A3']) ws_hb['A3'].s = { font:{bold:true,sz:11,color:{rgb:'333333'}}, alignment:{horizontal:'center',vertical:'center'} };
+            if (ws_hb['A5']) ws_hb['A5'].s = { font:{sz:10,italic:true,color:{rgb:'555555'}}, alignment:{horizontal:'left',vertical:'center'} };
+
+            headerRow_hb.forEach((_, ci) => {
+                const addr = XLSX.utils.encode_cell({ r: 6, c: ci });
+                if (ws_hb[addr]) ws_hb[addr].s = {
+                    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 },
+                    fill: { fgColor: { rgb: '154C79' } },
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                    border: bMed_hb
+                };
+            });
+
+            for (let ri = 7; ri < aoa_hb.length; ri++) {
+                const rowArr = aoa_hb[ri];
+                if (!rowArr) continue;
+                const isKatRow = rowArr && rowArr[1] && !rincianMentah.some(b => b.kode_barang === rowArr[0]);
+                for (let ci = 0; ci < 3; ci++) {
+                    const addr = XLSX.utils.encode_cell({ r: ri, c: ci });
+                    if (!ws_hb[addr]) ws_hb[addr] = { t: 'z' };
+                    ws_hb[addr].s = isKatRow ? {
+                        font: { bold: true, color: { rgb: '1A56A0' }, sz: 10 },
+                        fill: { fgColor: { rgb: 'EDF3FC' } },
+                        alignment: { horizontal: ci === 2 ? 'right' : (ci === 0 ? 'right' : 'left'), vertical: 'center' },
+                        border: bAll_hb
+                    } : {
+                        font: { sz: 10 },
+                        fill: { fgColor: { rgb: ri % 2 === 0 ? 'FFFFFF' : 'F9FAFB' } },
+                        alignment: { horizontal: ci === 2 ? 'right' : (ci === 0 ? 'right' : 'left'), vertical: 'center' },
+                        border: bAll_hb
+                    };
+                    if (ci === 2 && ws_hb[addr].t === 'n') ws_hb[addr].z = '#,##0';
+                }
+            }
+
+            const wb_hb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb_hb, ws_hb, 'Harga Barang');
+            XLSX.writeFile(wb_hb, `Laporan_Harga_Barang_${tahun}_${bulan}.xlsx`);
+        }
+
+        closeModal('export-modal');
+        return;
+    }
 
     let sourceData = (tabel === 'aggregate_masuk') ? barangMasukMentah : riwayatMentah;
 
     let data = sourceData.filter(item => {
+        if (!item.waktu_pengajuan && !item.waktu_masuk) return true; // Safety check
         const d  = new Date(item.waktu_pengajuan || item.waktu_masuk);
         const mY = tahun === 'Semua' || d.getFullYear().toString() === tahun;
         const mM = bulan === 'Semua' || (d.getMonth()+1).toString() === bulan;
@@ -705,26 +1379,26 @@ function executeExport() {
 
     let exportData = data;
 
-    if (tabel === 'aggregate') {
-        const map = {};
-        data.forEach(curr => {
-            let d = curr.status_pengajuan !== 'rejected' && curr.jumlah_disetujui !== null ? parseInt(curr.jumlah_disetujui) : 0;
-            if (d > 0) {
-                if (!map[curr.id_barang]) map[curr.id_barang] = { kode: kode(curr.id_barang), nama_barang: curr.nama_barang, satuan: curr.satuan || '-', jumlah: 0 };
-                map[curr.id_barang].jumlah += d;
-            }
-        });
-        exportData = Object.values(map).sort((a,b) => b.jumlah - a.jumlah);
-    } else if (tabel === 'aggregate_masuk') {
-        const map = {};
-        data.forEach(curr => {
-            let masuk = parseInt(curr.jumlah_masuk);
-            if (masuk > 0) {
-                if (!map[curr.id_barang]) map[curr.id_barang] = { kode: kode(curr.id_barang), nama_barang: curr.nama_barang, satuan: curr.satuan || '-', jumlah: 0 };
-                map[curr.id_barang].jumlah += masuk;
-            }
-        });
-        exportData = Object.values(map).sort((a,b) => b.jumlah - a.jumlah);
+    if (tabel === 'aggregate_gabungan') {
+        exportData = buildAggregateGabungan(tahun, bulan, '').map(i => ({
+            kode: kode(i),
+            kode_kategori: i.kode_kategori || '-',
+            nama_kategori: i.nama_kategori || '-',
+            nama_barang: i.nama_barang,
+            masuk: i.masuk,
+            keluar: i.keluar,
+            satuan: i.satuan || '-'
+        }));
+    } else if (tabel === 'divisi') {
+        exportData = buildAggregateDivisi(data).map(i => ({
+            divisi: i.divisi,
+            kode: kode(i),
+            kode_kategori: i.kode_kategori || '-',
+            nama_kategori: i.nama_kategori || '-',
+            nama_barang: i.nama_barang,
+            jumlah: i.jumlah,
+            satuan: i.satuan || '-'
+        }));
     } else if (tabel === 'grouped') {
         const groups = buildGrouped(data);
         exportData = groups.map(g => {
@@ -740,54 +1414,146 @@ function executeExport() {
         return;
     }
 
-    if (exportFormat === 'csv') {
-        let headers, rows;
-        if (tabel === 'aggregate') {
-            headers = '"KODE","NAMA BARANG","JUMLAH KELUAR","SATUAN"';
-            rows = exportData.map(item => `"${item.kode}","${item.nama_barang}",${item.jumlah},"${item.satuan}"`);
-        } else if (tabel === 'aggregate_masuk') {
-            headers = '"KODE","NAMA BARANG","JUMLAH MASUK","SATUAN"';
-            rows = exportData.map(item => `"${item.kode}","${item.nama_barang}",${item.jumlah},"${item.satuan}"`);
-        } else if (tabel === 'grouped') {
-            headers = '"WAKTU","PEMOHON","DIVISI","JUMLAH ITEM","STATUS"';
-            rows = exportData.map(item => `"${item.waktu}","${item.pemohon}","${item.divisi}",${item.jumlah_item},"${item.status}"`);
-        } else {
-            headers = '"WAKTU","PEMOHON","DIVISI","KODE","NAMA BARANG","DIMINTA","DISETUJUI","DITOLAK"';
-            rows = exportData.map(item => {
-                const dm = parseInt(item.jumlah_diminta);
+    if (exportFormat === 'xlsx') {
+        // ===== EXCEL EXPORT (SheetJS) =====
+        let aoa = [];
+
+        // Judul
+        aoa.push([judul]);
+        aoa.push([]);
+
+        let header = [];
+        if (tabel === 'divisi') { header = ['No', 'Tim Kerja', 'Kode', 'Kode Kategori', 'Kategori', 'Nama Barang', 'Jumlah Barang']; }
+        else if (tabel === 'aggregate_gabungan') { header = exportColumnsConfig['aggregate_gabungan']; }
+        else if (tabel === 'grouped') { header = exportColumnsConfig['grouped']; }
+        else { header = exportColumnsConfig['itemized']; }
+
+        if (selectedColIndices) {
+            header = header.filter((_, i) => selectedColIndices.includes(i));
+        }
+        aoa.push(header);
+
+        exportData.forEach((r, index) => {
+            let rowData = [];
+            if (tabel === 'divisi') {
+                rowData = [index + 1, r.divisi, r.kode, r.kode_kategori, r.nama_kategori, r.nama_barang, r.jumlah];
+            } else if (tabel === 'aggregate_gabungan') {
+                rowData = [r.kode, r.kode_kategori, r.nama_kategori, r.nama_barang, r.masuk, r.keluar, r.satuan];
+            } else if (tabel === 'grouped') {
+                rowData = [r.waktu, r.pemohon, r.divisi, r.jumlah_item, r.status];
+            } else {
+                const dm = parseInt(r.jumlah_diminta);
                 let ds = 0, dt = 0;
-                if (item.status_pengajuan === 'rejected') { dt = dm; } else { ds = item.jumlah_disetujui !== null ? parseInt(item.jumlah_disetujui) : 0; dt = dm - ds; }
-                return `"${fmtWaktu(item.waktu_pengajuan)}","${item.nama_lengkap}","${item.divisi || '-'}","${kode(item.id_barang)}","${item.nama_barang}",${dm},${ds},${dt}`;
+                if (r.status_pengajuan === 'rejected') { dt = dm; } else { ds = r.jumlah_disetujui !== null ? parseInt(r.jumlah_disetujui) : 0; dt = dm - ds; }
+                rowData = [fmtWaktu(r.waktu_pengajuan), r.nama_lengkap, r.divisi||'-', kode(r), r.nama_barang, dm, ds, dt];
+            }
+
+            if (selectedColIndices) {
+                rowData = rowData.filter((_, i) => selectedColIndices.includes(i));
+            }
+            aoa.push(rowData);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+        // Border helpers
+        const bThin = { top:{style:'thin',color:{rgb:'AAAAAA'}}, bottom:{style:'thin',color:{rgb:'AAAAAA'}}, left:{style:'thin',color:{rgb:'AAAAAA'}}, right:{style:'thin',color:{rgb:'AAAAAA'}} };
+        const bMedH = { top:{style:'medium',color:{rgb:'154C79'}}, bottom:{style:'medium',color:{rgb:'154C79'}}, left:{style:'medium',color:{rgb:'154C79'}}, right:{style:'medium',color:{rgb:'154C79'}} };
+
+        // Merge title row
+        const colCount = aoa[2] ? aoa[2].length : 8;
+        ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: colCount - 1 } }];
+
+        // Style title cell
+        if (ws['A1']) {
+            ws['A1'].s = {
+                font: { bold: true, sz: 14, color: { rgb: '1A3558' } },
+                alignment: { horizontal: 'center', vertical: 'center' }
+            };
+        }
+
+        // Style header row (row index 2 = 0-based)
+        const hRowIdx = 2;
+        aoa[hRowIdx] && aoa[hRowIdx].forEach((col, ci) => {
+            const cellAddr = XLSX.utils.encode_cell({ r: hRowIdx, c: ci });
+            if (!ws[cellAddr]) ws[cellAddr] = { t: 's', v: col };
+            ws[cellAddr].s = {
+                font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 },
+                fill: { fgColor: { rgb: '154C79' } },
+                alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                border: bMedH
+            };
+        });
+
+        // Style data rows (starting at row index 3)
+        for (let ri = 3; ri < aoa.length; ri++) {
+            const rowArr = aoa[ri];
+            if (!rowArr) continue;
+            rowArr.forEach((val, ci) => {
+                const addr = XLSX.utils.encode_cell({ r: ri, c: ci });
+                if (!ws[addr]) ws[addr] = { t: 'z' };
+                const isNum = typeof val === 'number';
+                ws[addr].s = {
+                    font: { sz: 10 },
+                    fill: { fgColor: { rgb: ri % 2 === 0 ? 'FFFFFF' : 'F4F8FF' } },
+                    alignment: { horizontal: isNum ? 'right' : 'left', vertical: 'center' },
+                    border: bThin
+                };
+                if (isNum) ws[addr].z = '#,##0';
             });
         }
-        const csv = '\uFEFF' + [headers, ...rows].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `Laporan_${tabel}_${tahun}.csv`;
-        link.click();
+
+        // Auto column width
+        const colWidths = aoa[hRowIdx] ? aoa[hRowIdx].map((_, ci) => {
+            let max = 10;
+            aoa.forEach(row => {
+                if (row && row[ci] != null) max = Math.max(max, String(row[ci]).length + 2);
+            });
+            return { wch: Math.min(max, 50) };
+        }) : [];
+        ws['!cols'] = colWidths;
+
+        // Row heights
+        ws['!rows'] = ws['!rows'] || [];
+        ws['!rows'][0] = { hpt: 26 };
+        ws['!rows'][hRowIdx] = { hpt: 22 };
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
+        XLSX.writeFile(wb, `Laporan_${tabel}_${tahun}.xlsx`);
     } else {
         // PDF
         const pWin = window.open('', '_blank');
         let colHeaders, bodyRows;
-        if (tabel === 'aggregate') {
-            colHeaders = '<th>Kode</th><th>Nama Barang</th><th>Jumlah Keluar</th><th>Satuan</th>';
-            bodyRows = exportData.map(item => `<tr><td>${item.kode}</td><td class="left">${item.nama_barang}</td><td>${item.jumlah}</td><td>${item.satuan}</td></tr>`).join('');
-        } else if (tabel === 'aggregate_masuk') {
-            colHeaders = '<th>Kode</th><th>Nama Barang</th><th>Jumlah Masuk</th><th>Satuan</th>';
-            bodyRows = exportData.map(item => `<tr><td>${item.kode}</td><td class="left">${item.nama_barang}</td><td>${item.jumlah}</td><td>${item.satuan}</td></tr>`).join('');
-        } else if (tabel === 'grouped') {
-            colHeaders = '<th>Waktu</th><th>Pemohon</th><th>Divisi</th><th>Jumlah Item</th><th>Status</th>';
-            bodyRows = exportData.map(item => `<tr><td>${item.waktu}</td><td class="left">${item.pemohon}</td><td>${item.divisi}</td><td>${item.jumlah_item}</td><td>${item.status}</td></tr>`).join('');
-        } else {
-            colHeaders = '<th>Waktu</th><th>Pemohon</th><th>Divisi</th><th>Kode</th><th>Nama Barang</th><th>Diminta</th><th>Disetujui</th><th>Ditolak</th>';
-            bodyRows = exportData.map(item => {
-                const dm = parseInt(item.jumlah_diminta);
-                let ds = 0, dt = 0;
-                if (item.status_pengajuan === 'rejected') { dt = dm; } else { ds = item.jumlah_disetujui !== null ? parseInt(item.jumlah_disetujui) : 0; dt = dm - ds; }
-                return `<tr><td>${fmtWaktu(item.waktu_pengajuan)}</td><td class="left">${item.nama_lengkap}</td><td>${item.divisi||'-'}</td><td>${kode(item.id_barang)}</td><td class="left">${item.nama_barang}</td><td>${dm}</td><td>${ds}</td><td>${dt}</td></tr>`;
+        
+        if (tabel === 'aggregate_gabungan' || tabel === 'grouped' || tabel === 'itemized') {
+            const hList = exportColumnsConfig[tabel];
+            const sIdx = selectedColIndices || hList.map((_, i) => i);
+            colHeaders = sIdx.map(i => `<th>${hList[i]}</th>`).join('');
+            
+            bodyRows = exportData.map(r => {
+                let rowVals = [];
+                if (tabel === 'aggregate_gabungan') {
+                    rowVals = [r.kode, r.kode_kategori, `<td class="left">${r.nama_kategori}</td>`, `<td class="left">${r.nama_barang}</td>`, r.masuk, r.keluar, r.satuan];
+                } else if (tabel === 'grouped') {
+                    rowVals = [r.waktu, `<td class="left">${r.pemohon}</td>`, r.divisi, r.jumlah_item, r.status];
+                } else {
+                    const dm = parseInt(r.jumlah_diminta);
+                    let ds = 0, dt = 0;
+                    if (r.status_pengajuan === 'rejected') { dt = dm; } else { ds = r.jumlah_disetujui !== null ? parseInt(r.jumlah_disetujui) : 0; dt = dm - ds; }
+                    rowVals = [fmtWaktu(r.waktu_pengajuan), `<td class="left">${r.nama_lengkap}</td>`, r.divisi||'-', kode(r), `<td class="left">${r.nama_barang}</td>`, dm, ds, dt];
+                }
+                
+                return '<tr>' + sIdx.map(i => {
+                    let val = rowVals[i];
+                    return String(val).startsWith('<td') ? val : `<td>${val}</td>`;
+                }).join('') + '</tr>';
             }).join('');
+        } else if (tabel === 'divisi') {
+            colHeaders = '<th>No</th><th>Tim Kerja</th><th>Kode</th><th>Kode Kategori</th><th>Kategori</th><th>Nama Barang</th><th>Jumlah Barang</th>';
+            bodyRows = exportData.map((item, index) => `<tr><td>${index + 1}</td><td class="left">${item.divisi}</td><td>${item.kode}</td><td>${item.kode_kategori}</td><td class="left">${item.nama_kategori}</td><td class="left">${item.nama_barang}</td><td>${item.jumlah}</td></tr>`).join('');
         }
+
         const html = `<html><head><title>${judul}</title><style>
             body{font-family:Helvetica,Arial,sans-serif;padding:20px;color:#000;margin:0;}
             h2{text-align:center;color:#000;margin-bottom:20px;text-transform:uppercase;}
@@ -796,9 +1562,22 @@ function executeExport() {
             th{background:#f1f5f9;font-weight:bold;text-transform:uppercase;}
             .left{text-align:left;}
             .footer{position:fixed;bottom:20px;left:20px;right:20px;font-size:10px;color:#000;border-top:1px solid #000;padding-top:10px;}
+            @media print {
+                @page { margin: 0; }
+                body { padding: 0 20px; }
+            }
         </style></head><body>
-        <h2>${judul}</h2>
-        <table><thead><tr>${colHeaders}</tr></thead><tbody>${bodyRows}</tbody></table>
+        <table>
+            <thead>
+                <tr>
+                    <td colspan="100%" style="border:none !important; padding:30px 0 15px 0 !important; text-align:center;">
+                        <h2>${judul}</h2>
+                    </td>
+                </tr>
+                <tr>${colHeaders}</tr>
+            </thead>
+            <tbody>${bodyRows}</tbody>
+        </table>
         <div class="footer">Dicetak Oleh Sistem Simbar Pada: ${fmtWaktu(new Date())} | Menampilkan: ${exportData.length} baris.</div>
         </body></html>`;
         pWin.document.write(html);

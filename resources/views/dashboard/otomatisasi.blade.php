@@ -8,7 +8,7 @@
     <div style="background:white; border-radius:24px; padding:35px; box-shadow:0 10px 30px rgba(0,0,0,0.02); border:1px solid #f1f5f9;">
 
         {{-- HEADER --}}
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:25px; flex-wrap:wrap; gap:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:15px;">
             <div style="display:flex; align-items:center; gap:20px;">
                 <div style="width:50px; height:50px; background:#eaf4fb; border-radius:15px; display:flex; justify-content:center; align-items:center;">
                     <i data-lucide="settings" style="width:24px;height:24px;color:#3498db;"></i>
@@ -19,33 +19,45 @@
                 </div>
             </div>
 
-            {{-- TOMBOL SIMPAN --}}
-            <form method="POST" action="{{ route('otomatisasi.update') }}" id="otomatisasi-form">
-                @csrf
-                <input type="hidden" name="items_json" id="items_json_field">
-                <button type="submit" style="display:flex; align-items:center; gap:8px; padding:12px 28px; background:#154c79; color:white; border:none; border-radius:25px; cursor:pointer; font-weight:bold; font-size:13px; box-shadow:0 4px 10px rgba(21,76,121,0.15); transition:0.2s; font-family:inherit;"
-                    onmouseover="this.style.background='#10395b'" onmouseout="this.style.background='#154c79'"
-                    onclick="prepareSubmit()">
-                    <i data-lucide="save" style="width:16px;height:16px;"></i> Simpan
-                </button>
-            </form>
+            <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+                {{-- PENCARIAN --}}
+                <div style="position:relative; min-width:250px;">
+                    <input type="text" id="searchInput" placeholder="Cari kategori, kode, atau nama..."
+                        style="width:100%; padding:10px 15px 10px 38px; border-radius:25px; border:1px solid #e2e8f0; outline:none; font-size:12px; box-sizing:border-box; font-family:inherit;"
+                        oninput="filterTable()">
+                    <i data-lucide="search" style="width:16px;height:16px;color:#94a3b8;position:absolute;left:14px;top:50%;transform:translateY(-50%);"></i>
+                </div>
+
+                {{-- TOMBOL SIMPAN --}}
+                <form method="POST" action="{{ route('otomatisasi.update') }}" id="otomatisasi-form" style="margin:0;">
+                    @csrf
+                    <input type="hidden" name="items_json" id="items_json_field">
+                    <button type="submit" style="display:flex; align-items:center; gap:8px; padding:12px 28px; background:#154c79; color:white; border:none; border-radius:25px; cursor:pointer; font-weight:bold; font-size:13px; box-shadow:0 4px 10px rgba(21,76,121,0.15); transition:0.2s; font-family:inherit;"
+                        onmouseover="this.style.background='#10395b'" onmouseout="this.style.background='#154c79'"
+                        onclick="prepareSubmit()">
+                        <i data-lucide="save" style="width:16px;height:16px;"></i> Simpan
+                    </button>
+                </form>
+            </div>
         </div>
 
         {{-- TABEL BARANG --}}
-        <div style="background:white; border-radius:12px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.02); overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse; text-align:center; min-width:700px;">
+        <div style="background:white; border-radius:12px; border:1px solid #e2e8f0; overflow-x:auto; overflow-y:auto; max-height:740px; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
+            <table style="width:100%; border-collapse:collapse; text-align:center; min-width:900px;">
                 <thead>
-                    <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0;">
-                        <th style="padding:15px 10px; width:60px;">
+                    <tr>
+                        <th style="padding:15px 10px; width:60px; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">
                             <input type="checkbox" id="select-all"
                                    style="transform:scale(1.3); cursor:pointer; accent-color:#27ae60;"
                                    title="Pilih Semua" onchange="toggleAll(this)">
                         </th>
-                        <th style="padding:15px 10px; font-size:12px; color:#1f4068; font-weight:bold; text-transform:uppercase;">Foto</th>
-                        <th style="padding:15px 10px; font-size:12px; color:#1f4068; font-weight:bold; text-transform:uppercase;">Kode</th>
-                        <th style="padding:15px 10px; font-size:12px; color:#1f4068; font-weight:bold; text-transform:uppercase;">Nama Barang</th>
-                        <th style="padding:15px 10px; font-size:12px; color:#1f4068; font-weight:bold; text-transform:uppercase;">Sisa Stok</th>
-                        <th style="padding:15px 10px; font-size:12px; color:#1f4068; font-weight:bold; text-transform:uppercase;">Satuan</th>
+                        <th style="padding:15px 10px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Foto</th>
+                        <th style="padding:15px 10px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Kode Kategori</th>
+                        <th style="padding:15px 10px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Kategori</th>
+                        <th style="padding:15px 10px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Kode Barang</th>
+                        <th style="padding:15px 10px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Nama Barang</th>
+                        <th style="padding:15px 10px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Sisa Stok</th>
+                        <th style="padding:15px 10px; font-size:12px; color:#154c79; font-weight:bold; text-transform:uppercase; position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Satuan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -76,31 +88,41 @@
                             </div>
                         </td>
 
-                        {{-- KODE --}}
+                        {{-- KODE KATEGORI --}}
                         <td style="padding:12px 10px; text-align:center; vertical-align:middle;">
-                            <span style="font-size:12px; color:#1f4068; font-weight:500;">{{ $item->kode }}</span>
+                            <span style="font-size:12px; color:black;">{{ $item->kode_kategori ?? '-' }}</span>
+                        </td>
+
+                        {{-- NAMA KATEGORI --}}
+                        <td style="padding:12px 10px; text-align:center; vertical-align:middle;">
+                            <span style="font-size:12px; color:black;">{{ $item->nama_kategori ?? '-' }}</span>
+                        </td>
+
+                        {{-- KODE BARANG --}}
+                        <td style="padding:12px 10px; text-align:center; vertical-align:middle;">
+                            <span style="font-size:12px; color:black;">{{ $item->kode ?? '-' }}</span>
                         </td>
 
                         {{-- NAMA BARANG --}}
                         <td style="padding:12px 10px; text-align:center; vertical-align:middle;">
-                            <span style="font-size:12px; color:#1f4068; font-weight:500;">{{ $item->nama_barang }}</span>
+                            <span style="font-size:12px; color:black;">{{ $item->nama_barang }}</span>
                         </td>
 
                         {{-- SISA STOK --}}
                         <td style="padding:12px 10px; text-align:center; vertical-align:middle;">
-                            <span id="stok-text-{{ $item->id_barang }}" style="font-size:12px; font-weight:500; color:{{ $item->is_auto_approve ? '#15803d' : '#1f4068' }};">
+                            <span id="stok-text-{{ $item->id_barang }}" style="font-size:12px; color:{{ $item->is_auto_approve ? '#15803d' : 'black' }};">
                                 {{ $item->stok_aktual }}
                             </span>
                         </td>
 
                         {{-- SATUAN --}}
                         <td style="padding:12px 10px; text-align:center; vertical-align:middle;">
-                            <span style="font-size:12px; color:#1f4068; font-weight:500;">{{ $item->satuan }}</span>
+                            <span style="font-size:12px; color:black;">{{ $item->satuan }}</span>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" style="text-align:center; padding:50px; color:#94a3b8; font-size:13px;">
+                        <td colspan="8" style="text-align:center; padding:50px; color:#94a3b8; font-size:13px;">
                             Belum ada data barang di inventaris.
                         </td>
                     </tr>
@@ -150,7 +172,7 @@ function updateRowStyle(id, isChecked) {
     const row = document.querySelector(`#cb-${id}`)?.closest('tr');
     const stokSpan = document.getElementById(`stok-text-${id}`);
     if (row) row.style.backgroundColor = isChecked ? '#f0fdf4' : 'white';
-    if (stokSpan) stokSpan.style.color = isChecked ? '#15803d' : '#1f4068';
+    if (stokSpan) stokSpan.style.color = isChecked ? '#15803d' : 'black';
 }
 
 function syncMasterCheckbox() {
@@ -167,6 +189,16 @@ function prepareSubmit() {
         is_auto_approve: barangState[id]
     }));
     document.getElementById('items_json_field').value = JSON.stringify(items);
+}
+
+function filterTable() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const rows = document.querySelectorAll(".barang-row");
+    
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+    });
 }
 
 // Init master checkbox state

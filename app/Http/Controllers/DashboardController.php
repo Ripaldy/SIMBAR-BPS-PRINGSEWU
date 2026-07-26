@@ -29,8 +29,9 @@ class DashboardController extends Controller
             // Stats for pemimpin
             $totalBarang        = Barang::count();
             $permintaanTertunda = Pengajuan::where('status_pengajuan', 'pending')->count();
-            $barangKritis       = Barang::whereRaw('stok_aktual <= stok_minimum')->get();
+            $barangKritis       = Barang::whereRaw('stok_aktual <= stok_minimum')->where('stok_minimum', '>', 0)->get();
             $totalDisetujui     = Pengajuan::where('status_pengajuan', 'approved')->count();
+            $totalPengguna      = User::count();
 
             return view('pemimpin.index', compact(
                 'user',
@@ -38,6 +39,7 @@ class DashboardController extends Controller
                 'permintaanTertunda',
                 'barangKritis',
                 'totalDisetujui',
+                'totalPengguna',
                 'dataTren',
                 'dataTrenMasuk',
                 'dataKategori',
@@ -52,7 +54,7 @@ class DashboardController extends Controller
         $totalBarang        = Barang::count();
         $permintaanTertunda = Pengajuan::where('status_pengajuan', 'pending')->count();
         $totalPengguna      = User::count();
-        $barangKritis       = Barang::whereRaw('stok_aktual <= stok_minimum')->get();
+        $barangKritis       = Barang::whereRaw('stok_aktual <= stok_minimum')->where('stok_minimum', '>', 0)->get();
 
         return view('dashboard.index', compact(
             'user',
@@ -128,8 +130,8 @@ class DashboardController extends Controller
             ->where('status_pengajuan', 'approved')
             ->whereYear('pengajuan.waktu_pengajuan', $year)
             ->join('barang', 'pengajuan.id_barang', '=', 'barang.id_barang')
-            ->selectRaw('barang.kategori as name, SUM(pengajuan.jumlah_disetujui) as value')
-            ->groupBy('barang.kategori');
+            ->selectRaw('barang.nama_kategori as name, SUM(pengajuan.jumlah_disetujui) as value')
+            ->groupBy('barang.nama_kategori');
 
         if ($month !== 'Semua') {
             $query->whereMonth('pengajuan.waktu_pengajuan', $month);
