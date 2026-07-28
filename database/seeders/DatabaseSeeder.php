@@ -12,10 +12,10 @@ class DatabaseSeeder extends Seeder
     {
         // Admin default
         User::firstOrCreate(
-            ['email' => 'admin@simbar.id'],
+            ['email' => 'admin@bps.go.id'],
             [
                 'nama_lengkap' => 'Administrator',
-                'password'     => Hash::make('admin123'),
+                'password'     => Hash::make('12345678'),
                 'role'         => 'admin',
                 'jabatan'      => 'Kepala Bagian Umum',
                 'divisi'       => 'Administrasi',

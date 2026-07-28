@@ -8,14 +8,15 @@
     <div class="card">
         <div class="toolbar" style="flex-wrap:wrap; gap:10px;">
             {{-- Search + Filter Kategori --}}
-            <form method="GET" action="{{ route('aset.index') }}" id="filter-form-aset" style="display:flex; gap:8px; flex:1; min-width:0; flex-wrap:wrap;">
-                <div class="search-bar" style="min-width:220px; flex:1;">
+            <form method="GET" action="{{ route('aset.index') }}" id="filter-form-aset" style="display:flex; gap:8px; flex:1; min-width:0; flex-wrap:nowrap; align-items:center;">
+                <div class="search-bar" style="width:250px; min-width:200px;">
                     <i data-lucide="search" class="search-icon" style="width:18px;height:18px;"></i>
-                    <input type="text" name="search" value="{{ $search }}"
+                    <input type="text" name="search" id="searchInput" value="{{ $search }}"
                            placeholder="Cari nama / kode barang..."
-                           onkeyup="debounceSubmit(this.form)">
+                           oninput="filterTable()"
+                           onkeydown="if(event.key === 'Enter') event.preventDefault();">
                 </div>
-                <select name="kode_kategori" class="form-select" style="width:auto;" onchange="this.form.submit()">
+                <select name="kode_kategori" class="form-select" style="max-width:220px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;" onchange="this.form.submit()">
                     <option value="">Semua Kategori</option>
                     @foreach($kategoriList as $kat)
                         <option value="{{ $kat->kode_kategori }}" {{ $filterKategori == $kat->kode_kategori ? 'selected' : '' }}>
@@ -33,7 +34,7 @@
                 <a href="{{ route('aset.index') }}?download_template=1" class="btn btn-secondary">
                     <i data-lucide="download" style="width:16px;height:16px;"></i> Template
                 </a>
-                <button type="button" onclick="document.getElementById('csv-input-aset').click()" class="btn btn-success">
+                <button type="button" onclick="openModal('upload-modal')" class="btn btn-success">
                     <i data-lucide="upload" style="width:16px;height:16px;"></i> Upload Excel
                 </button>
                 <button type="button" class="btn btn-primary" onclick="openAddModal()">
@@ -43,28 +44,24 @@
         </div>
     </div>
 
-    {{-- FORM UPLOAD EXCEL (tersembunyi) --}}
-    <form method="POST" action="{{ route('aset.uploadCsv') }}" enctype="multipart/form-data" id="csv-form-aset" style="display:none;">
-        @csrf
-        <input type="file" name="file_excel" accept=".csv,.xlsx,.xls" id="csv-input-aset" onchange="submitCsvForm()">
-    </form>
+    {{-- (Upload form dipindah ke dalam modal) --}}
 
     {{-- Tabel Manajemen Aset --}}
     <div class="card table-container" style="zoom: 90%; max-height:740px; overflow-y:auto; padding:0;">
         <table style="min-width:980px;">
             <thead>
                 <tr>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Foto</th>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Kode Kategori</th>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Kategori</th>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Kode Barang</th>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Nama Barang</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:60px;">Foto</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:120px;">Kode Kategori</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:150px;">Kategori</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:100px;">Kode Barang</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:220px;">Nama Barang</th>
 
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Harga Satuan</th>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Sisa Stok</th>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Stok Min.</th>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Status</th>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box;">Aksi</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:120px;">Harga Satuan</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:80px;">Sisa Stok</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:80px;">Stok Min.</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:100px;">Status</th>
+                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0; background-clip:padding-box; width:120px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -101,15 +98,15 @@
                         <td style="color:black;">{{ $item->stok_minimum }}</td>
                         <td>
                             @if($isKosong)
-                                <span class="status-kosong">∅ KOSONG</span>
+                                <span class="status-kosong">KOSONG</span>
                             @elseif($isKritis)
-                                <span class="status-kritis">⚠ KRITIS</span>
+                                <span class="status-kritis">KRITIS</span>
                             @else
-                                <span class="status-aman">✓ AMAN</span>
+                                <span class="status-aman">AMAN</span>
                             @endif
                         </td>
                         <td>
-                            <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+                            <div style="display:flex; gap:6px; justify-content:center; flex-wrap:nowrap; min-width:110px;">
                                 <button class="btn btn-secondary btn-sm" onclick='openEditModal(@json($item))' title="Edit">
                                     <i data-lucide="edit-3" style="width:14px;height:14px;"></i>
                                 </button>
@@ -198,7 +195,7 @@
                     <input type="number" name="harga_satuan" id="field-harga" class="form-control" min="0" placeholder="0" value="0">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
-                    <label class="form-label" style="margin-bottom:4px;">Stok Awal</label>
+                    <label class="form-label" style="margin-bottom:4px;">Sisa Stok</label>
                     <input type="number" name="stok_aktual" id="field-stok" class="form-control" required min="0">
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
@@ -229,6 +226,62 @@
     </div>
 </div>
 
+{{-- MODAL UPLOAD EXCEL --}}
+<div class="modal-overlay" id="upload-modal">
+    <div class="modal" style="max-width:500px;">
+        <div class="modal-header">
+            <h3>Upload Excel & Sinkronisasi</h3>
+            <button class="modal-close" onclick="closeModal('upload-modal')"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
+        </div>
+        <form method="POST" action="{{ route('aset.uploadCsv') }}" enctype="multipart/form-data">
+            @csrf
+            <div style="margin-bottom:15px;">
+                <p style="font-size:13px; color:#64748b; margin-bottom:10px;">Pilih metode upload:</p>
+                <label style="display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; cursor:pointer;">
+                    <input type="radio" name="upload_mode" value="setup" checked style="margin-top:3px; accent-color:#3498db;">
+                    <div>
+                        <strong style="font-size:14px; color:#1e293b;">Mode 1: Setup Stok Awal (Migrasi)</strong>
+                        <p style="font-size:12px; color:#64748b; margin:0;">Stok Aktual akan <b>ditimpa</b> dengan angka di Excel tanpa mencatat Laporan Barang Masuk. Hanya untuk setup awal.</p>
+                    </div>
+                </label>
+                <label style="display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; cursor:pointer;">
+                    <input type="radio" name="upload_mode" value="update_harga" style="margin-top:3px; accent-color:#3498db;">
+                    <div>
+                        <strong style="font-size:14px; color:#1e293b;">Mode 2: Update Harga & Stok Min</strong>
+                        <p style="font-size:12px; color:#64748b; margin:0;">Hanya meng-update <b>Harga Satuan & Stok Minimum</b>. Stok Aktual di Excel <b>diabaikan</b>. Tanpa catat Barang Masuk.</p>
+                    </div>
+                </label>
+                <label style="display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; cursor:pointer;">
+                    <input type="radio" name="upload_mode" value="tambah_baru" style="margin-top:3px; accent-color:#3498db;">
+                    <div>
+                        <strong style="font-size:14px; color:#1e293b;">Mode 3: Import Barang Baru</strong>
+                        <p style="font-size:12px; color:#64748b; margin:0;">Hanya meng-import barang dengan kode yang <b>belum ada</b> di sistem. Barang yang kodenya sudah ada akan <b>dilewati/diabaikan</b>.</p>
+                    </div>
+                </label>
+                <label style="display:flex; align-items:flex-start; gap:10px; margin-bottom:15px; cursor:pointer;">
+                    <input type="radio" name="upload_mode" value="tambah_stok" style="margin-top:3px; accent-color:#3498db;">
+                    <div>
+                        <strong style="font-size:14px; color:#1e293b;">Mode 4: Tambah Stok (Barang Masuk bulanan)</strong>
+                        <p style="font-size:12px; color:#64748b; margin:0;">Stok di Excel akan <b>ditambahkan</b> ke sisa stok saat ini dan <b>dicatat otomatis</b> di Laporan Barang Masuk.</p>
+                    </div>
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Pilih File (.xlsx, .xls, .csv)</label>
+                <input type="file" name="file_excel" class="form-control" accept=".csv,.xlsx,.xls" required>
+            </div>
+            
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('upload-modal')">Batal</button>
+                <button type="submit" class="btn btn-success">
+                    <i data-lucide="upload" style="width:16px;height:16px;"></i> Upload & Proses
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {{-- MODAL TAMBAH STOK --}}
 <div class="modal-overlay" id="stock-modal">
     <div class="modal" style="max-width:380px;">
@@ -240,8 +293,8 @@
         <form method="POST" id="stock-form">
             @csrf
             <div class="form-group">
-                <label class="form-label">Jumlah Tambah</label>
-                <input type="number" name="jumlah_tambah" class="form-control" required min="1" placeholder="Masukkan jumlah">
+                <label class="form-label">Jumlah Tambah (Gunakan angka minus untuk pembatalan / undo)</label>
+                <input type="number" name="jumlah_tambah" class="form-control" required placeholder="Contoh: 10 atau -10">
             </div>
             <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('stock-modal')">Batal</button>
@@ -312,6 +365,9 @@
         document.getElementById('field-satuan').value = '';
         document.getElementById('field-harga').value = '0';
         document.getElementById('field-stok').value = '';
+        document.getElementById('field-stok').readOnly = false;
+        document.getElementById('field-stok').style.backgroundColor = '';
+        document.getElementById('field-stok').title = '';
         document.getElementById('field-min').value = '5';
         document.getElementById('field-auto').checked = false;
         openModal('form-modal');
@@ -329,6 +385,9 @@
         document.getElementById('field-satuan').value = item.satuan || '';
         document.getElementById('field-harga').value = item.harga_satuan || 0;
         document.getElementById('field-stok').value = item.stok_aktual;
+        document.getElementById('field-stok').readOnly = true;
+        document.getElementById('field-stok').style.backgroundColor = '#f1f5f9';
+        document.getElementById('field-stok').title = 'Gunakan fitur Tambah Stok (Ikon +) untuk mengubah stok';
         document.getElementById('field-min').value = item.stok_minimum || 5;
         document.getElementById('field-auto').checked = item.is_auto_approve == true || item.is_auto_approve === true;
         openModal('form-modal');
@@ -361,6 +420,19 @@
         if (fileInput.files && fileInput.files[0]) {
             document.getElementById('csv-form-aset').submit();
         }
+    }
+
+    function filterTable() {
+        const input = document.getElementById("searchInput").value.toLowerCase();
+        const rows = document.querySelectorAll("tbody tr");
+        
+        rows.forEach(row => {
+            // Abaikan baris "Kosong" agar tidak di-filter out jika ada
+            if (row.querySelector('td').colSpan > 1) return;
+            
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(input) ? "" : "none";
+        });
     }
 </script>
 @endpush

@@ -186,6 +186,15 @@
 
         <div id="cart-footer" style="display:none; padding:20px; border-top:1px solid #e2e8f0; background:#f8fafc;">
             <div style="margin-bottom:15px;">
+                <label style="display:block; font-size:12px; color:#475569; font-weight:bold; margin-bottom:8px;">Pilih Tim Kerja (Wajib)</label>
+                <select id="cart-tim-kerja" style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px; box-sizing:border-box; outline:none; font-family:inherit;" required>
+                    <option value="">-- Pilih Tim Kerja --</option>
+                    @foreach($divisiList as $div)
+                        <option value="{{ $div }}">{{ $div }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div style="margin-bottom:15px;">
                 <label style="display:block; font-size:12px; color:#475569; font-weight:bold; margin-bottom:8px;">Alasan / Tujuan (Opsional)</label>
                 <textarea id="cart-alasan" rows="2" placeholder="Tulis tujuan penggunaan barang..."
                     style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px; box-sizing:border-box; outline:none; resize:vertical; font-family:inherit;"></textarea>
@@ -194,6 +203,7 @@
                 @csrf
                 <div id="form-items-hidden"></div>
                 <input type="hidden" name="alasan" id="form-alasan">
+                <input type="hidden" name="tim_kerja" id="form-tim-kerja">
                 <button type="button" onclick="submitPengajuan()"
                     style="width:100%; padding:12px; background:#27ae60; color:white; border:none; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:8px; font-family:inherit;">
                     <i data-lucide="check-circle-2" style="width:16px;height:16px;"></i> Ajukan Sekarang
@@ -208,7 +218,14 @@
 @push('scripts')
 <script>
 // ===== CART STATE =====
-let cart = {};
+let cart = JSON.parse(sessionStorage.getItem('simbarCart')) || {};
+@if(session('success'))
+    sessionStorage.removeItem('simbarCart');
+    cart = {};
+@endif
+document.addEventListener('DOMContentLoaded', () => {
+    updateCartUI();
+});
 let viewMode = localStorage.getItem('katalogViewMode') || 'grid';
 
 // ===== VIEW TOGGLE =====
@@ -284,6 +301,7 @@ function changeQty(id, delta) {
 }
 
 function updateCartUI() {
+    sessionStorage.setItem('simbarCart', JSON.stringify(cart));
     const items = Object.values(cart);
     const totalQty = items.length;
     const floatBtn = document.getElementById('floating-cart');
@@ -356,6 +374,9 @@ function showNotif(msg) {
 }
 
 function submitPengajuan() {
+    const timKerja = document.getElementById('cart-tim-kerja').value.trim();
+    if (!timKerja) { alert('Silakan pilih Tim Kerja terlebih dahulu.'); return; }
+    
     const alasan = document.getElementById('cart-alasan').value.trim();
     if (Object.keys(cart).length === 0) { alert('Keranjang kosong.'); return; }
 
@@ -366,6 +387,7 @@ function submitPengajuan() {
                              <input type="hidden" name="items[${idx}][qty]" value="${item.qty}">`;
     });
     document.getElementById('form-alasan').value = alasan;
+    document.getElementById('form-tim-kerja').value = timKerja;
     document.getElementById('submit-form').submit();
 }
 </script>

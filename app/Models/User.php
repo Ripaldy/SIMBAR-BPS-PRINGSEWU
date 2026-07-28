@@ -22,7 +22,6 @@ class User extends Authenticatable
         'nip_bps',
         'no_telepon',
         'jabatan',
-        'divisi',
         'foto_profil',
         'is_verified',
         'remember_token',

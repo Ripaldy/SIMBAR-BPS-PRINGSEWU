@@ -25,11 +25,11 @@ class ProfilController extends Controller
             'nip_bps'      => 'nullable|string|max:50',
             'no_telepon'   => 'nullable|string|max:20',
             'jabatan'      => 'nullable|string|max:100',
-            'divisi'       => 'nullable|string|max:100',
             'foto_profil'  => 'nullable|image|max:2048',
+            'password'     => 'nullable|string|min:8',
         ]);
 
-        $data = $request->only(['nama_lengkap', 'nip', 'nip_bps', 'no_telepon', 'jabatan', 'divisi']);
+        $data = $request->only(['nama_lengkap', 'nip', 'nip_bps', 'no_telepon', 'jabatan']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);

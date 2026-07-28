@@ -57,16 +57,16 @@
             @endforeach
         </select>
 
-        {{-- Filter Tahun & Bulan (muncul jika mode aggregate) --}}
+        {{-- Filter Tahun & Bulan (berlaku untuk semua mode) --}}
         <select id="aggTahun" onchange="renderTable()"
-            style="display:none; padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; color:#1f4068; outline:none; cursor:pointer; font-family:inherit;">
+            style="padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; color:#1f4068; outline:none; cursor:pointer; font-family:inherit;">
             <option value="Semua">Semua Tahun</option>
             @foreach($availableYears as $y)
                 <option value="{{ $y }}" {{ $y == now()->year ? 'selected' : '' }}>Tahun {{ $y }}</option>
             @endforeach
         </select>
         <select id="aggBulan" onchange="renderTable()"
-            style="display:none; padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; color:#1f4068; outline:none; cursor:pointer; font-family:inherit;">
+            style="padding:10px 15px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; color:#1f4068; outline:none; cursor:pointer; font-family:inherit;">
             <option value="Semua">Semua Bulan</option>
             <option value="1" {{ now()->month == 1 ? 'selected' : '' }}>Januari</option>
             <option value="2" {{ now()->month == 2 ? 'selected' : '' }}>Februari</option>
@@ -346,7 +346,7 @@ function buildGrouped(data) {
     const obj = {};
     data.forEach(item => {
         const key = item.waktu_pengajuan + '_' + item.id_user;
-        if (!obj[key]) obj[key] = { id_group: key, waktu_pengajuan: item.waktu_pengajuan, nama_lengkap: item.nama_lengkap, divisi: item.divisi, items: [] };
+        if (!obj[key]) obj[key] = { id_group: key, waktu_pengajuan: item.waktu_pengajuan, nama_lengkap: item.nama_lengkap, tim_kerja: item.tim_kerja, items: [] };
         obj[key].items.push(item);
     });
     return Object.values(obj).map(g => {
@@ -371,27 +371,38 @@ function getFilteredData() {
 
     let base = riwayatMentah;
 
+    // Filter tanggal/bulan untuk data riwayat pengeluaran
+    if (aggTahun !== 'Semua') {
+        const periodStart = new Date(parseInt(aggTahun), aggBulan === 'Semua' ? 0 : parseInt(aggBulan) - 1, 1);
+        const periodEnd   = new Date(parseInt(aggTahun), aggBulan === 'Semua' ? 12 : parseInt(aggBulan), 0, 23, 59, 59);
+        
+        base = base.filter(item => {
+            const d = new Date(item.waktu_pengajuan);
+            return d >= periodStart && d <= periodEnd;
+        });
+    }
+
     if (mode === 'aggregate_gabungan') {
         return buildAggregateGabungan(aggTahun, aggBulan, kata);
     }
 
     if (mode === 'divisi') {
         base = base.filter(item => {
-            const matchD = divisi === 'Semua Divisi' || item.divisi === divisi;
-            const matchK = !kata || item.nama_lengkap.toLowerCase().includes(kata) || item.nama_barang.toLowerCase().includes(kata) || (item.divisi && item.divisi.toLowerCase().includes(kata));
+            const matchD = divisi === 'Semua Divisi' || item.tim_kerja === divisi;
+            const matchK = !kata || item.nama_lengkap.toLowerCase().includes(kata) || item.nama_barang.toLowerCase().includes(kata) || (item.tim_kerja && item.tim_kerja.toLowerCase().includes(kata));
             return matchD && matchK;
         });
         return buildAggregateDivisi(base);
     } else if (mode === 'grouped') {
         const groups = buildGrouped(base);
         return groups.filter(g => {
-            return !kata || g.nama_lengkap.toLowerCase().includes(kata) || (g.divisi && g.divisi.toLowerCase().includes(kata)) || g.items.some(i => i.nama_barang.toLowerCase().includes(kata));
+            return !kata || g.nama_lengkap.toLowerCase().includes(kata) || (g.tim_kerja && g.tim_kerja.toLowerCase().includes(kata)) || g.items.some(i => i.nama_barang.toLowerCase().includes(kata));
         });
     } else if (mode === 'aggregate') {
         base = base.filter(item => !kata || item.nama_barang.toLowerCase().includes(kata));
     } else {
         base = base.filter(item => {
-            return !kata || item.nama_lengkap.toLowerCase().includes(kata) || item.nama_barang.toLowerCase().includes(kata) || (item.divisi && item.divisi.toLowerCase().includes(kata));
+            return !kata || item.nama_lengkap.toLowerCase().includes(kata) || item.nama_barang.toLowerCase().includes(kata) || (item.tim_kerja && item.tim_kerja.toLowerCase().includes(kata));
         });
     }
 
@@ -403,10 +414,10 @@ function buildAggregateDivisi(data) {
     data.forEach(curr => {
         let disetujui = curr.status_pengajuan !== 'rejected' && curr.jumlah_disetujui !== null ? parseInt(curr.jumlah_disetujui) : 0;
         if (disetujui > 0) {
-            const key = (curr.divisi || 'Tanpa Tim') + '_' + curr.id_barang;
+            const key = (curr.tim_kerja || 'Tanpa Tim') + '_' + curr.id_barang;
             if (!map[key]) {
                 map[key] = {
-                    divisi: curr.divisi || '-',
+                    tim_kerja: curr.tim_kerja || '-',
                     id_barang: curr.id_barang,
                     kode_barang: curr.kode_barang,
                     kode_kategori: curr.kode_kategori || '-',
@@ -421,8 +432,8 @@ function buildAggregateDivisi(data) {
         }
     });
     return Object.values(map).sort((a,b) => {
-        if (a.divisi === b.divisi) return b.jumlah - a.jumlah;
-        return a.divisi.localeCompare(b.divisi);
+        if (a.tim_kerja === b.tim_kerja) return b.jumlah - a.jumlah;
+        return a.tim_kerja.localeCompare(b.tim_kerja);
     });
 }
 
@@ -536,7 +547,7 @@ function renderTable() {
                 html += `<tr style="border-bottom:1px solid #f1f5f9;">
                     <td style="padding:15px 10px;font-size:12px;color:#000;text-align:center;">${fmtWaktu(g.waktu_pengajuan)}</td>
                     <td style="padding:15px 10px;font-size:12px;color:#000;text-align:center;">${g.nama_lengkap}</td>
-                    <td style="padding:15px 10px;font-size:12px;color:#000;text-align:center;">${g.divisi || '-'}</td>
+                    <td style="padding:15px 10px;font-size:12px;color:#000;text-align:center;">${g.tim_kerja || '-'}</td>
                     <td style="padding:15px 10px;font-size:12px;color:#000;text-align:center;">${g.totalItem}</td>
                     <td style="padding:15px 10px;text-align:center;vertical-align:middle;">
                         <span onclick='openDetailModal(${groupJson})' style="color:#3498db;font-size:12px;cursor:pointer;text-decoration:underline;">Detail</span>
@@ -573,7 +584,7 @@ function renderTable() {
                     ${tdS(fmtWaktu(item.waktu_pengajuan))}
                     <td style="padding:12px;border-right:1px solid #e2e8f0;">${imgCell(item.foto_barang, item.nama_barang)}</td>
                     ${tdS(item.nama_lengkap)}
-                    ${tdS(item.divisi || '-')}
+                    ${tdS(item.tim_kerja || '-')}
                     ${tdS(kode(item))}
                     ${tdS(item.nama_barang)}
                     ${tdS(diminta)}
@@ -603,7 +614,7 @@ function renderTable() {
             slice.forEach((item, index) => {
                 html += `<tr style="border-bottom:1px solid #e2e8f0;">
                     ${tdS(start + index + 1)}
-                    ${tdS(item.divisi)}
+                    ${tdS(item.tim_kerja)}
                     <td style="padding:12px;border-right:1px solid #e2e8f0;vertical-align:middle;">${imgCell(item.foto_barang, item.nama_barang)}</td>
                     ${tdS(kode(item))}
                     ${tdS(item.kode_kategori || '-')}
@@ -732,12 +743,26 @@ function buildRincianHTML(tahun, bulan) {
         return new Date(parseInt(tahun), parseInt(bulan), 0, 23, 59, 59); // akhir bulan
     })();
 
-    // Group barang by kategori
+    // Group by kode_kategori → { nama_kategori, kode_kategori, items[] }
     const kategoriMap = {};
     rincianMentah.forEach(b => {
-        const kat = b.nama_kategori || 'LAINNYA';
-        if (!kategoriMap[kat]) kategoriMap[kat] = [];
-        kategoriMap[kat].push(b);
+        const katKey = b.kode_kategori || '000000';
+        if (!kategoriMap[katKey]) {
+            kategoriMap[katKey] = {
+                kode_kategori: b.kode_kategori || '-',
+                nama_kategori: b.nama_kategori || 'LAINNYA',
+                items: []
+            };
+        }
+        kategoriMap[katKey].items.push(b);
+    });
+
+    // Account code mapping — prefix digits of kode_kategori map to account group
+    const akunMap = {};
+    Object.values(kategoriMap).forEach(kat => {
+        const akunKode = kat.kode_kategori.length >= 6 ? kat.kode_kategori.substring(0, 6) : '117111';
+        if (!akunMap[akunKode]) akunMap[akunKode] = { nama: 'Barang Konsumsi', kategori: [] };
+        akunMap[akunKode].kategori.push(kat);
     });
 
     const periodLabel = tahun === 'Semua' ? 'Semua Periode'
@@ -760,7 +785,7 @@ function buildRincianHTML(tahun, bulan) {
                             <p style="margin:4px 0;font-size:12px;color:#333;"><b>UNTUK PERIODE YANG BERAKHIR TANGGAL: ${periodLabel.split(' s.d. ')[1] || '-'}</b></p>
                             <p style="margin:0;font-size:12px;color:#333;"><b>TAHUN ANGGARAN: ${tahun === 'Semua' ? 'SEMUA' : tahun}</b></p>
                         </div>
-                        <p style="font-size:11px;color:#333;margin:4px 0;">NAMA UAKPB: BADAN PUSAT STATISK KABUPATEN PRINGSEWU</p>
+                        <p style="font-size:11px;color:#333;margin:4px 0;">NAMA UAKPB: BADAN PUSAT STATISTIK KABUPATEN PRINGSEWU</p>
                         <p style="font-size:11px;color:#333;margin:4px 0 0 0;">PERIODE: ${periodLabel}</p>
                     </td>
                 </tr>
@@ -783,9 +808,10 @@ function buildRincianHTML(tahun, bulan) {
             </thead>
             <tbody>`;
 
-    Object.keys(kategoriMap).forEach(kat => {
-        const items = kategoriMap[kat];
-        let katTotalAwalRp = 0, katTotalAkhirRp = 0;
+    Object.entries(akunMap).forEach(([akunKode, akun]) => {
+        akun.kategori.forEach(kat => {
+            const items = kat.items;
+            let katTotalAwalRp = 0, katTotalAkhirRp = 0;
 
         // Compute per-item
         const computed = items.map(b => {
@@ -836,7 +862,7 @@ function buildRincianHTML(tahun, bulan) {
         html += `<tr style="background:#f0f4ff;">
             <td style="${tdC}"></td>
             <td style="${tdL}">
-                <span style="font-weight:bold;color:#1a56a0;font-size:11px;">${kat}</span>
+                <span style="font-weight:bold;color:#1a56a0;font-size:11px;">${kat.nama_kategori}</span>
             </td>
             <td colspan="2" style="${tdN}color:#1a56a0;font-weight:bold;">${katTotalAwalRp > 0 ? fmtRupiah(katTotalAwalRp) : ''}</td>
             <td colspan="3" style="${tdN}"></td>
@@ -856,6 +882,7 @@ function buildRincianHTML(tahun, bulan) {
                 <td style="${tdN}">${c.stokAkhir > 0 ? c.stokAkhir : 0}</td>
                 <td style="${tdN}">${c.rupAkhir > 0 ? fmtRupiah(c.rupAkhir) : 0}</td>
             </tr>`;
+        });
         });
     });
 
@@ -966,8 +993,8 @@ function buildHargaBarangHTML(tahun, bulan) {
 function onViewModeChange() {
     const mode = document.getElementById('viewMode').value;
     document.getElementById('divisiFilter').style.display  = mode === 'divisi' ? 'block' : 'none';
-    document.getElementById('aggTahun').style.display      = (mode === 'aggregate_gabungan' || mode === 'rincian' || mode === 'harga_barang') ? 'block' : 'none';
-    document.getElementById('aggBulan').style.display      = (mode === 'aggregate_gabungan' || mode === 'rincian' || mode === 'harga_barang') ? 'block' : 'none';
+    document.getElementById('aggTahun').style.display      = 'block';
+    document.getElementById('aggBulan').style.display      = 'block';
     currentPage = 1;
     renderTable();
 }
@@ -1067,13 +1094,13 @@ function executeExport() {
     const divisi = document.getElementById('export-divisi').value;
     let judul = "LAPORAN RIWAYAT PENGAJUAN INVENTARIS BPS";
     
-    if (tabel === 'aggregate_gabungan') judul = "TABEL AGREGAT BARANG";
+    if (tabel === 'aggregate_gabungan') judul = "LAPORAN AGREGAT BARANG";
     else if (tabel === 'divisi') {
         const customJudul = document.getElementById('export-judul-divisi').value.trim();
-        judul = customJudul ? customJudul : "TABEL PENGELUARAN TIM KERJA";
+        judul = customJudul ? customJudul : "LAPORAN PENGELUARAN TIM KERJA";
     }
-    else if (tabel === 'grouped') judul = "HISTORY PENGAJUAN (GABUNGAN)";
-    else if (tabel === 'itemized') judul = "HISTORY PENGAJUAN (PER BARANG)";
+    else if (tabel === 'grouped') judul = "LAPORAN HISTORY PENGAJUAN (GABUNGAN)";
+    else if (tabel === 'itemized') judul = "LAPORAN HISTORY PENGAJUAN (PER BARANG)";
 
     let selectedColIndices = null;
     if (exportColumnsConfig[tabel]) {
@@ -1099,9 +1126,22 @@ function executeExport() {
 
         const kategoriMap = {};
         rincianMentah.forEach(b => {
-            const kat = b.nama_kategori || 'LAINNYA';
-            if (!kategoriMap[kat]) kategoriMap[kat] = [];
-            kategoriMap[kat].push(b);
+            const katKey = b.kode_kategori || '000000';
+            if (!kategoriMap[katKey]) {
+                kategoriMap[katKey] = {
+                    kode_kategori: b.kode_kategori || '-',
+                    nama_kategori: b.nama_kategori || 'LAINNYA',
+                    items: []
+                };
+            }
+            kategoriMap[katKey].items.push(b);
+        });
+
+        const akunMap = {};
+        Object.values(kategoriMap).forEach(kat => {
+            const akunKode = kat.kode_kategori.length >= 6 ? kat.kode_kategori.substring(0, 6) : '117111';
+            if (!akunMap[akunKode]) akunMap[akunKode] = { nama: 'Barang Konsumsi', kategori: [] };
+            akunMap[akunKode].kategori.push(kat);
         });
 
         const aoa = [];
@@ -1116,8 +1156,9 @@ function executeExport() {
             { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },
         ];
 
-        Object.keys(kategoriMap).forEach(kat => {
-            const items = kategoriMap[kat];
+        Object.entries(akunMap).forEach(([akunKode, akun]) => {
+            akun.kategori.forEach(kat => {
+                const items = kat.items;
             let katTotalAwalRp = 0, katTotalAkhirRp = 0;
 
             const computed = items.map(b => {
@@ -1153,7 +1194,7 @@ function executeExport() {
 
             // Kategori header row
             const rIdx = aoa.length;
-            aoa.push(['', kat, katTotalAwalRp > 0 ? katTotalAwalRp : '', '', '', '', '', katTotalAkhirRp > 0 ? katTotalAkhirRp : '', '']);
+            aoa.push(['', kat.nama_kategori, katTotalAwalRp > 0 ? katTotalAwalRp : '', '', '', '', '', katTotalAkhirRp > 0 ? katTotalAkhirRp : '', '']);
             merges.push({ s: { r: rIdx, c: 2 }, e: { r: rIdx, c: 3 } });
             merges.push({ s: { r: rIdx, c: 4 }, e: { r: rIdx, c: 6 } });
             merges.push({ s: { r: rIdx, c: 7 }, e: { r: rIdx, c: 8 } });
@@ -1168,6 +1209,7 @@ function executeExport() {
                     c.rupAkhir
                 ]);
             });
+        });
         });
 
         if (exportFormat === 'xlsx') {
@@ -1373,7 +1415,7 @@ function executeExport() {
         const d  = new Date(item.waktu_pengajuan || item.waktu_masuk);
         const mY = tahun === 'Semua' || d.getFullYear().toString() === tahun;
         const mM = bulan === 'Semua' || (d.getMonth()+1).toString() === bulan;
-        const mD = (tabel !== 'divisi' && tabel !== 'grouped' && tabel !== 'itemized') || divisi === 'Semua Divisi' || item.divisi === divisi;
+        const mD = (tabel !== 'divisi' && tabel !== 'grouped' && tabel !== 'itemized') || divisi === 'Semua Divisi' || item.tim_kerja === divisi;
         return mY && mM && mD;
     });
 
@@ -1391,7 +1433,7 @@ function executeExport() {
         }));
     } else if (tabel === 'divisi') {
         exportData = buildAggregateDivisi(data).map(i => ({
-            divisi: i.divisi,
+            tim_kerja: i.divisi,
             kode: kode(i),
             kode_kategori: i.kode_kategori || '-',
             nama_kategori: i.nama_kategori || '-',
@@ -1405,7 +1447,7 @@ function executeExport() {
             let st = 'Disetujui';
             if (g.status_pengajuan === 'rejected') st = 'Ditolak';
             else if (g.status_pengajuan === 'sebagian') st = 'Sebagian';
-            return { waktu: fmtWaktu(g.waktu_pengajuan), pemohon: g.nama_lengkap, divisi: g.divisi || '-', jumlah_item: g.totalItem, status: st };
+            return { waktu: fmtWaktu(g.waktu_pengajuan), pemohon: g.nama_lengkap, tim_kerja: g.tim_kerja || '-', jumlah_item: g.totalItem, status: st };
         });
     }
 
@@ -1436,16 +1478,16 @@ function executeExport() {
         exportData.forEach((r, index) => {
             let rowData = [];
             if (tabel === 'divisi') {
-                rowData = [index + 1, r.divisi, r.kode, r.kode_kategori, r.nama_kategori, r.nama_barang, r.jumlah];
+                rowData = [index + 1, r.tim_kerja, r.kode, r.kode_kategori, r.nama_kategori, r.nama_barang, r.jumlah];
             } else if (tabel === 'aggregate_gabungan') {
                 rowData = [r.kode, r.kode_kategori, r.nama_kategori, r.nama_barang, r.masuk, r.keluar, r.satuan];
             } else if (tabel === 'grouped') {
-                rowData = [r.waktu, r.pemohon, r.divisi, r.jumlah_item, r.status];
+                rowData = [r.waktu, r.pemohon, r.tim_kerja, r.jumlah_item, r.status];
             } else {
                 const dm = parseInt(r.jumlah_diminta);
                 let ds = 0, dt = 0;
                 if (r.status_pengajuan === 'rejected') { dt = dm; } else { ds = r.jumlah_disetujui !== null ? parseInt(r.jumlah_disetujui) : 0; dt = dm - ds; }
-                rowData = [fmtWaktu(r.waktu_pengajuan), r.nama_lengkap, r.divisi||'-', kode(r), r.nama_barang, dm, ds, dt];
+                rowData = [fmtWaktu(r.waktu_pengajuan), r.nama_lengkap, r.tim_kerja||'-', kode(r), r.nama_barang, dm, ds, dt];
             }
 
             if (selectedColIndices) {
@@ -1536,12 +1578,12 @@ function executeExport() {
                 if (tabel === 'aggregate_gabungan') {
                     rowVals = [r.kode, r.kode_kategori, `<td class="left">${r.nama_kategori}</td>`, `<td class="left">${r.nama_barang}</td>`, r.masuk, r.keluar, r.satuan];
                 } else if (tabel === 'grouped') {
-                    rowVals = [r.waktu, `<td class="left">${r.pemohon}</td>`, r.divisi, r.jumlah_item, r.status];
+                    rowVals = [r.waktu, `<td class="left">${r.pemohon}</td>`, r.tim_kerja, r.jumlah_item, r.status];
                 } else {
                     const dm = parseInt(r.jumlah_diminta);
                     let ds = 0, dt = 0;
                     if (r.status_pengajuan === 'rejected') { dt = dm; } else { ds = r.jumlah_disetujui !== null ? parseInt(r.jumlah_disetujui) : 0; dt = dm - ds; }
-                    rowVals = [fmtWaktu(r.waktu_pengajuan), `<td class="left">${r.nama_lengkap}</td>`, r.divisi||'-', kode(r), `<td class="left">${r.nama_barang}</td>`, dm, ds, dt];
+                    rowVals = [fmtWaktu(r.waktu_pengajuan), `<td class="left">${r.nama_lengkap}</td>`, r.tim_kerja||'-', kode(r), `<td class="left">${r.nama_barang}</td>`, dm, ds, dt];
                 }
                 
                 return '<tr>' + sIdx.map(i => {
@@ -1551,12 +1593,31 @@ function executeExport() {
             }).join('');
         } else if (tabel === 'divisi') {
             colHeaders = '<th>No</th><th>Tim Kerja</th><th>Kode</th><th>Kode Kategori</th><th>Kategori</th><th>Nama Barang</th><th>Jumlah Barang</th>';
-            bodyRows = exportData.map((item, index) => `<tr><td>${index + 1}</td><td class="left">${item.divisi}</td><td>${item.kode}</td><td>${item.kode_kategori}</td><td class="left">${item.nama_kategori}</td><td class="left">${item.nama_barang}</td><td>${item.jumlah}</td></tr>`).join('');
+            bodyRows = exportData.map((item, index) => `<tr><td>${index + 1}</td><td class="left">${item.tim_kerja}</td><td>${item.kode}</td><td>${item.kode_kategori}</td><td class="left">${item.nama_kategori}</td><td class="left">${item.nama_barang}</td><td>${item.jumlah}</td></tr>`).join('');
+        }
+
+        // Buat label periode
+        const endDay = (() => {
+            if (tahun === 'Semua') return null;
+            if (bulan === 'Semua') return 31;
+            return new Date(parseInt(tahun), parseInt(bulan), 0).getDate();
+        })();
+        const mNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        
+        let periodLabel = 'Semua Periode';
+        if (tahun !== 'Semua') {
+            if (bulan === 'Semua') {
+                periodLabel = `01 Januari ${tahun} s.d. 31 Desember ${tahun}`;
+            } else {
+                periodLabel = `01 ${mNames[parseInt(bulan)-1]} ${tahun} s.d. ${endDay} ${mNames[parseInt(bulan)-1]} ${tahun}`;
+            }
         }
 
         const html = `<html><head><title>${judul}</title><style>
             body{font-family:Helvetica,Arial,sans-serif;padding:20px;color:#000;margin:0;}
-            h2{text-align:center;color:#000;margin-bottom:20px;text-transform:uppercase;}
+            h2{text-align:center;color:#000;margin-bottom:8px;font-size:16px;text-transform:uppercase;}
+            h3{text-align:center;color:#000;margin-bottom:8px;font-size:12px;font-weight:normal;text-transform:uppercase;}
+            p.periode{text-align:center;color:#000;margin-bottom:20px;font-size:12px;font-weight:bold;text-transform:uppercase;}
             table{width:100%;border-collapse:collapse;font-size:11px;}
             th,td{border:1px solid #000;padding:8px 10px;text-align:center;color:#000;}
             th{background:#f1f5f9;font-weight:bold;text-transform:uppercase;}
@@ -1571,7 +1632,9 @@ function executeExport() {
             <thead>
                 <tr>
                     <td colspan="100%" style="border:none !important; padding:30px 0 15px 0 !important; text-align:center;">
+                        <h3>Sistem Manajemen Asset Barang Persediaan BPS Kabupaten Pringsewu</h3>
                         <h2>${judul}</h2>
+                        <p class="periode">PERIODE: ${periodLabel}</p>
                     </td>
                 </tr>
                 <tr>${colHeaders}</tr>
@@ -1600,5 +1663,6 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
 
 // Init
 renderTable();
+onExportTabelChange();
 </script>
 @endpush

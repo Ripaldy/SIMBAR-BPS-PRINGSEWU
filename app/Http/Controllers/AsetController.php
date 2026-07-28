@@ -14,10 +14,10 @@ class AsetController extends Controller
     {
         if ($request->has('download_template')) {
             $data = [
-                ['Kode Kategori', 'Nama Kategori', 'Kode Barang', 'Nama Barang', 'Satuan', 'Stok Aktual', 'Stok Minimum'],
-                ['1010301001', 'ALAT TULIS', '000001', 'BALLPOINT BOLLINER', 'PCS', 50, 10],
-                ['1010301001', 'ALAT TULIS', '000004', 'SPIDOL', 'PCS', 20, 5],
-                ['1010302001', 'KERTAS', '000010', 'KERTAS HVS A4', 'RIM', 30, 5],
+                ['Kode Kategori', 'Nama Kategori', 'Kode Barang', 'Nama Barang', 'Satuan', 'Stok Aktual', 'Stok Minimum', 'Harga Satuan'],
+                ['1010301001', 'ALAT TULIS', '000001', 'BALLPOINT BOLLINER', 'PCS', 50, 10, 2500],
+                ['1010301001', 'ALAT TULIS', '000004', 'SPIDOL', 'PCS', 20, 5, 8000],
+                ['1010302001', 'KERTAS', '000010', 'KERTAS HVS A4', 'RIM', 30, 5, 55000],
             ];
             
             return response()->streamDownload(function() use ($data) {
@@ -46,7 +46,7 @@ class AsetController extends Controller
         $kategoriList = Barang::whereNotNull('kode_kategori')
             ->select('kode_kategori', 'nama_kategori')
             ->distinct()
-            ->orderBy('kode_kategori')
+            ->orderBy('nama_kategori')
             ->get();
 
         // Daftar satuan unik dari tabel barang (untuk datalist)
@@ -87,7 +87,11 @@ class AsetController extends Controller
 
         $existingBarang = null;
         if (!empty($data['kode_barang'])) {
-            $existingBarang = Barang::where('kode_barang', $data['kode_barang'])->first();
+            $query = Barang::where('kode_barang', $data['kode_barang']);
+            if (!empty($data['kode_kategori'])) {
+                $query->where('kode_kategori', $data['kode_kategori']);
+            }
+            $existingBarang = $query->first();
         } else {
             $existingBarang = Barang::where('nama_barang', $data['nama_barang'])->first();
         }
@@ -155,7 +159,7 @@ class AsetController extends Controller
     // Tambah stok barang
     public function addStock(Request $request, $id)
     {
-        $request->validate(['jumlah_tambah' => 'required|integer|min:1']);
+        $request->validate(['jumlah_tambah' => 'required|integer|not_in:0']);
         $barang = Barang::findOrFail($id);
         $barang->increment('stok_aktual', $request->jumlah_tambah);
 
@@ -191,6 +195,7 @@ class AsetController extends Controller
 
         $file = $request->file('file_excel');
         $ext  = strtolower($file->getClientOriginalExtension());
+        $uploadMode = $request->input('upload_mode', 'tambah');
 
         if (!in_array($ext, ['csv', 'xlsx', 'xls'])) {
             return redirect()->back()->withErrors(['file_excel' => 'File harus berformat CSV atau Excel.']);
@@ -216,7 +221,7 @@ class AsetController extends Controller
         $count = 0;
 
         foreach ($lines as $row) {
-            // Format BPS: Kode Kategori | Nama Kategori | Kode Barang | Nama Barang | Satuan | Stok Aktual | Stok Minimum
+            // Format BPS: Kode Kategori | Nama Kategori | Kode Barang | Nama Barang | Satuan | Stok Aktual | Stok Minimum | Harga Satuan
             if (count($row) >= 7) {
                 $kodeKategori = strtoupper(trim(str_replace('"', '', $row[0])));
                 $namaKategori = strtoupper(trim(str_replace('"', '', $row[1])));
@@ -225,24 +230,55 @@ class AsetController extends Controller
                 if (empty($namaBarang)) continue;
 
                 $stokAktual = (int) trim($row[5]);
+                $hargaSatuan = isset($row[7]) ? (int) trim($row[7]) : 0;
 
                 $existingBarang = null;
                 if (!empty($kodeBarang)) {
-                    $existingBarang = Barang::where('kode_barang', $kodeBarang)->first();
+                    $query = Barang::where('kode_barang', $kodeBarang);
+                    if (!empty($kodeKategori)) {
+                        $query->where('kode_kategori', $kodeKategori);
+                    }
+                    $existingBarang = $query->first();
                 } else {
                     $existingBarang = Barang::where('nama_barang', $namaBarang)->first();
                 }
 
                 if ($existingBarang) {
-                    if ($stokAktual > 0) {
-                        $existingBarang->increment('stok_aktual', $stokAktual);
-                        BarangMasuk::create([
-                            'id_barang'    => $existingBarang->id_barang,
-                            'jumlah_masuk' => $stokAktual,
-                            'id_user'      => auth()->id()
+                    if ($uploadMode === 'setup') {
+                        // Mode 1: Setup Stok Awal (Timpa stok aktual, tanpa riwayat)
+                        $existingBarang->update([
+                            'stok_aktual'  => $stokAktual,
                         ]);
+                    } elseif ($uploadMode === 'update_harga') {
+                        // Mode 2: Update Harga & Stok Min (Abaikan stok aktual)
+                        $existingBarang->update([
+                            'harga_satuan' => $hargaSatuan > 0 ? $hargaSatuan : $existingBarang->harga_satuan,
+                            'stok_minimum' => (int) trim($row[6]),
+                        ]);
+                    } elseif ($uploadMode === 'tambah_baru') {
+                        // Mode 3: Import Barang Baru (Skip jika barang sudah ada)
+                        continue;
+                    } elseif ($uploadMode === 'tambah_stok') {
+                        // Mode 4: Tambah Stok (Barang Masuk bulanan)
+                        if ($stokAktual != 0) {
+                            $existingBarang->increment('stok_aktual', $stokAktual);
+                            BarangMasuk::create([
+                                'id_barang'    => $existingBarang->id_barang,
+                                'jumlah_masuk' => $stokAktual,
+                                'id_user'      => auth()->id()
+                            ]);
+                        }
+                        if ($hargaSatuan > 0) {
+                            $existingBarang->update(['harga_satuan' => $hargaSatuan]);
+                        }
                     }
                     $count++;
+                    continue;
+                }
+
+                // Jika barang BELUM ADA di database
+                if ($uploadMode === 'update_harga') {
+                    // Jika mode ini, kita skip karena tujuannya hanya update harga barang existing
                     continue;
                 }
 
@@ -254,14 +290,22 @@ class AsetController extends Controller
                     'satuan'          => strtoupper(trim(str_replace('"', '', $row[4]))),
                     'stok_aktual'     => $stokAktual,
                     'stok_minimum'    => (int) trim($row[6]),
+                    'harga_satuan'    => $hargaSatuan,
                     'is_auto_approve' => false,
                 ]);
 
-                BarangMasuk::create([
-                    'id_barang'    => $barang->id_barang,
-                    'jumlah_masuk' => $barang->stok_aktual,
-                    'id_user'      => auth()->id()
-                ]);
+                // Hanya catat Barang Masuk jika modenya Tambah Stok bulanan atau Import Baru yang memang harus dicatat (berdasarkan requirement awal).
+                // Tapi user minta: Setup Stok Awal TIDAK dicatat.
+                if ($uploadMode === 'tambah_stok' || $uploadMode === 'tambah_baru') {
+                    if ($barang->stok_aktual != 0) {
+                        BarangMasuk::create([
+                            'id_barang'    => $barang->id_barang,
+                            'jumlah_masuk' => $barang->stok_aktual,
+                            'id_user'      => auth()->id()
+                        ]);
+                    }
+                }
+                
                 $count++;
 
             } elseif (count($row) >= 4) {
@@ -274,13 +318,20 @@ class AsetController extends Controller
                 $existingBarang = Barang::where('nama_barang', $nama)->first();
 
                 if ($existingBarang) {
-                    if ($stokAktual > 0) {
-                        $existingBarang->increment('stok_aktual', $stokAktual);
-                        BarangMasuk::create([
-                            'id_barang'    => $existingBarang->id_barang,
-                            'jumlah_masuk' => $stokAktual,
-                            'id_user'      => auth()->id()
+                    if ($uploadMode === 'update') {
+                        $existingBarang->update([
+                            'stok_aktual'  => $stokAktual,
+                            'stok_minimum' => (int) trim($row[3] ?? 0),
                         ]);
+                    } else {
+                        if ($stokAktual != 0) {
+                            $existingBarang->increment('stok_aktual', $stokAktual);
+                            BarangMasuk::create([
+                                'id_barang'    => $existingBarang->id_barang,
+                                'jumlah_masuk' => $stokAktual,
+                                'id_user'      => auth()->id()
+                            ]);
+                        }
                     }
                     $count++;
                     continue;

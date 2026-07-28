@@ -42,19 +42,13 @@
             {{-- Search --}}
             <div class="search-bar" style="flex:2; min-width:250px;">
                 <i data-lucide="search" class="search-icon" style="width:18px;height:18px;"></i>
-                <input type="text" name="search" value="{{ $search }}"
-                       placeholder="Cari nama, email, atau jabatan..."
-                       onkeyup="debounceSubmitPengguna(this.form)" style="width: 100%;">
+                <input type="text" name="search" id="searchInput" value="{{ $search }}"
+                       placeholder="Cari nama, email, atau jabatan..." style="width: 100%;"
+                       oninput="filterTable()"
+                       onkeydown="if(event.key === 'Enter') event.preventDefault();">
             </div>
 
-            {{-- Semua Tim Kerja --}}
-            <select name="divisi" class="form-select" style="flex:1; min-width:140px;"
-                    onchange="this.form.submit()">
-                <option value="Semua" {{ $divisiFilter==='Semua' ? 'selected' : '' }}>Semua Tim Kerja</option>
-                @foreach($divisiList as $div)
-                    <option value="{{ $div }}" {{ $divisiFilter===$div ? 'selected' : '' }}>{{ $div }}</option>
-                @endforeach
-            </select>
+
 
             {{-- Semua Role --}}
             <select name="role" class="form-select" style="flex:1; min-width:130px;"
@@ -104,7 +98,7 @@
                     <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Email</th>
                     <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Role</th>
                     <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Jabatan</th>
-                    <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Tim Kerja</th>
+
                     <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Status</th>
                     <th style="position:sticky; top:0; background:#f8fafc; z-index:10; border-bottom:1px solid #e2e8f0;">Aksi</th>
                 </tr>
@@ -127,7 +121,7 @@
                     <td style="color:black;">{{ $p->email }}</td>
                     <td style="color:black;">{{ ucfirst($p->role) }}</td>
                     <td style="color:black;">{{ $p->jabatan ?? '-' }}</td>
-                    <td style="color:black;">{{ $p->divisi ?? '-' }}</td>
+
                     <td>
                         <span class="badge {{ $p->is_verified ? 'badge-success' : 'badge-gray' }}">
                             {{ $p->is_verified ? 'Aktif' : 'Nonaktif' }}
@@ -154,7 +148,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">Tidak ada pengguna ditemukan.</td>
+                    <td colspan="7" style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">Tidak ada pengguna ditemukan.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -184,7 +178,7 @@
                 <div class="form-group">
                     <label class="form-label">Kata Sandi</label>
                     <div style="position:relative;">
-                        <input type="password" name="password" id="add-password" class="form-control" required minlength="6" style="padding-right:45px;" autocomplete="new-password">
+                        <input type="password" name="password" id="add-password" class="form-control" required minlength="8" style="padding-right:45px;" autocomplete="new-password">
                         <button type="button" onclick="togglePassword('add-password', 'add-eye-icon')" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; color:#94a3b8;" title="Tampilkan/Sembunyikan Kata Sandi">
                             <span id="add-eye-icon" style="display:flex;">
                                 <i data-lucide="eye" style="width:18px;height:18px;"></i>
@@ -203,34 +197,22 @@
 
                 <div class="form-group">
                     <label class="form-label">NIP</label>
-                    <input type="text" name="nip" class="form-control" placeholder="Contoh: 199001012020121001">
+                    <input type="text" name="nip" class="form-control" placeholder="Contoh: 199001012020121001" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                 </div>
                 <div class="form-group">
                     <label class="form-label">NIP BPS</label>
-                    <input type="text" name="nip_bps" class="form-control" placeholder="Contoh: 340012345">
+                    <input type="text" name="nip_bps" class="form-control" placeholder="Contoh: 340012345" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Jabatan</label>
                     <input type="text" name="jabatan" class="form-control" placeholder="Contoh: Staff IT">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Tim Kerja</label>
-                    <select name="divisi" class="form-control form-select">
-                        <option value="">-- Pilih Tim Kerja --</option>
-                        @foreach($divisiList as $div)
-                            <option value="{{ $div }}">{{ $div }}</option>
-                        @endforeach
-                        <option value="_custom">+ Tim Kerja Lain (isi manual)</option>
-                    </select>
-                    <input type="text" id="add-divisi-custom" name="divisi_custom"
-                           class="form-control" style="display:none; margin-top:6px;"
-                           placeholder="Tulis nama tim kerja baru">
-                </div>
+
             </div>
             <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('add-modal')">Batal</button>
-                <button type="submit" class="btn btn-primary" onclick="handleAddDivisiSubmit(event, this.form)">
+                <button type="submit" class="btn btn-primary">
                     <i data-lucide="save" style="width:16px;height:16px;"></i> Simpan
                 </button>
             </div>
@@ -255,7 +237,7 @@
                 <div class="form-group">
                     <label class="form-label">Kata Sandi Baru <small style="color:#94a3b8;">(opsional)</small></label>
                     <div style="position:relative;">
-                        <input type="password" name="password" id="edit-password" class="form-control" minlength="6" style="padding-right:45px;" autocomplete="new-password">
+                        <input type="password" name="password" id="edit-password" class="form-control" minlength="8" style="padding-right:45px;" autocomplete="new-password">
                         <button type="button" onclick="togglePassword('edit-password', 'edit-eye-icon')" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; color:#94a3b8;" title="Tampilkan/Sembunyikan Kata Sandi">
                             <span id="edit-eye-icon" style="display:flex;">
                                 <i data-lucide="eye" style="width:18px;height:18px;"></i>
@@ -282,35 +264,22 @@
 
                 <div class="form-group">
                     <label class="form-label">NIP</label>
-                    <input type="text" name="nip" id="edit-nip" class="form-control" placeholder="Contoh: 199001012020121001">
+                    <input type="text" name="nip" id="edit-nip" class="form-control" placeholder="Contoh: 199001012020121001" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                 </div>
                 <div class="form-group">
                     <label class="form-label">NIP BPS</label>
-                    <input type="text" name="nip_bps" id="edit-nip-bps" class="form-control" placeholder="Contoh: 340012345">
+                    <input type="text" name="nip_bps" id="edit-nip-bps" class="form-control" placeholder="Contoh: 340012345" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Jabatan</label>
                     <input type="text" name="jabatan" id="edit-jabatan" class="form-control">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Tim Kerja</label>
-                    <select name="divisi" id="edit-divisi-select" class="form-control form-select"
-                            onchange="handleEditDivisiChange(this)">
-                        <option value="">-- Pilih Tim Kerja --</option>
-                        @foreach($divisiList as $div)
-                            <option value="{{ $div }}">{{ $div }}</option>
-                        @endforeach
-                        <option value="_custom">+ Tim Kerja Lain (isi manual)</option>
-                    </select>
-                    <input type="text" id="edit-divisi-custom" name="divisi_custom"
-                           class="form-control" style="display:none; margin-top:6px;"
-                           placeholder="Tulis nama tim kerja baru">
-                </div>
+
             </div>
             <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('edit-modal')">Batal</button>
-                <button type="submit" class="btn btn-primary" onclick="handleEditDivisiSubmit(event, this.form)">
+                <button type="submit" class="btn btn-primary">
                     <i data-lucide="save" style="width:16px;height:16px;"></i> Simpan
                 </button>
             </div>
@@ -369,76 +338,7 @@ function openEditUserModal(user) {
     document.getElementById('edit-nip').value = user.nip || '';
     document.getElementById('edit-nip-bps').value = user.nip_bps || '';
 
-    // Set divisi dropdown
-    const divisiSelect = document.getElementById('edit-divisi-select');
-    const divisiCustom = document.getElementById('edit-divisi-custom');
-    const divisiVal    = user.divisi || '';
-    const optExist     = Array.from(divisiSelect.options).find(o => o.value === divisiVal);
-
-    if (!divisiVal) {
-        divisiSelect.value = '';
-        divisiCustom.style.display = 'none';
-    } else if (optExist) {
-        divisiSelect.value = divisiVal;
-        divisiCustom.style.display = 'none';
-    } else {
-        divisiSelect.value = '_custom';
-        divisiCustom.style.display = 'block';
-        divisiCustom.value = divisiVal;
-    }
-
-    divisiSelect.name = 'divisi';
-    divisiCustom.name = 'divisi_custom';
     openModal('edit-modal');
-}
-
-function handleEditDivisiChange(select) {
-    const custom = document.getElementById('edit-divisi-custom');
-    if (select.value === '_custom') {
-        custom.style.display = 'block';
-        custom.focus();
-    } else {
-        custom.style.display = 'none';
-        custom.value = '';
-    }
-}
-
-function handleEditDivisiSubmit(e, form) {
-    const select = document.getElementById('edit-divisi-select');
-    const custom = document.getElementById('edit-divisi-custom');
-    if (select.value === '_custom') {
-        if (!custom.value.trim()) { e.preventDefault(); custom.focus(); return; }
-        select.removeAttribute('name');
-        custom.name = 'divisi';
-    } else {
-        select.name = 'divisi';
-        custom.name = 'divisi_custom';
-    }
-}
-
-// ===== ADD USER - DIVISI CUSTOM =====
-const addDivisiSelect = document.querySelector('#add-modal select[name="divisi"]');
-if (addDivisiSelect) {
-    addDivisiSelect.addEventListener('change', function() {
-        const custom = document.getElementById('add-divisi-custom');
-        if (this.value === '_custom') {
-            custom.style.display = 'block';
-            custom.focus();
-        } else {
-            custom.style.display = 'none';
-            custom.value = '';
-        }
-    });
-}
-
-function handleAddDivisiSubmit(e, form) {
-    const select = form.querySelector('select[name="divisi"]');
-    const custom = document.getElementById('add-divisi-custom');
-    if (select && select.value === '_custom') {
-        if (!custom.value.trim()) { e.preventDefault(); custom.focus(); return; }
-        select.removeAttribute('name');
-        custom.name = 'divisi';
-    }
 }
 
 // ===== DELETE USER =====
@@ -468,6 +368,19 @@ function togglePassword(inputId, iconId) {
         container.innerHTML = '<i data-lucide="eye" style="width:18px;height:18px;"></i>';
     }
     lucide.createIcons();
+}
+
+function filterTable() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const rows = document.querySelectorAll("tbody tr");
+    
+    rows.forEach(row => {
+        // Abaikan baris "Kosong" agar tidak di-filter out jika ada
+        if (row.querySelector('td').colSpan > 1) return;
+        
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+    });
 }
 </script>
 @endpush

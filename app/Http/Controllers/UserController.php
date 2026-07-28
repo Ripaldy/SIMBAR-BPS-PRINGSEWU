@@ -26,15 +26,14 @@ class UserController extends Controller
         $search       = $request->get('search', '');
         $roleFilter   = $request->get('role', 'Semua');
         $statusFilter = $request->get('status', 'Semua');
-        $divisiFilter = $request->get('divisi', 'Semua');
+        $statusFilter = $request->get('status', 'Semua');
 
         $pengguna = User::query()
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($q2) use ($search) {
                     $q2->where('nama_lengkap', 'ilike', "%{$search}%")
                        ->orWhere('email', 'ilike', "%{$search}%")
-                       ->orWhere('jabatan', 'ilike', "%{$search}%")
-                       ->orWhere('divisi', 'ilike', "%{$search}%");
+                       ->orWhere('jabatan', 'ilike', "%{$search}%");
                 });
             })
             ->when($roleFilter !== 'Semua', function ($q) use ($roleFilter) {
@@ -46,9 +45,6 @@ class UserController extends Controller
             ->when($statusFilter === 'Nonaktif', function ($q) {
                 $q->where('is_verified', false);
             })
-            ->when($divisiFilter !== 'Semua', function ($q) use ($divisiFilter) {
-                $q->where('divisi', $divisiFilter);
-            })
             ->orderBy('nama_lengkap')
             ->get();
 
@@ -59,38 +55,16 @@ class UserController extends Controller
             'nonaktif' => User::where('is_verified', false)->count(),
         ];
 
-        $divisiList = [
-            'Tim Subbagian Umum',
-            'Tim Statistik Sosial',
-            'Tim Statistik Produksi',
-            'Tim Statistik Distribusi',
-            'Tim Neraca Wilayah dan Analisis Statistik',
-            'Tim Pengolahan dan IT',
-            'Tim Diseminasi Statistik',
-            'Tim Reformasi Birokrasi',
-            'Tim Perencanaan dan Administrasi Keuangan',
-            'Tim Pembinaan dan Pelaksanaan Statistik Sektoral',
-            'Umum Kantor',
-            'Tim Humas',
-            'Tim Sensus Ekonomi 2026'
-        ];
-
-        return view('dashboard.pengguna', compact('pengguna', 'stats', 'divisiList', 'search', 'roleFilter', 'statusFilter', 'divisiFilter'));
+        return view('dashboard.pengguna', compact('pengguna', 'stats', 'search', 'roleFilter', 'statusFilter'));
     }
 
     public function store(Request $request)
     {
-        // Jika pilihan divisi adalah '_custom', ambil dari input teks divisi_custom
-        $divisi = $request->divisi;
-        if ($divisi === '_custom') {
-            $divisi = $request->divisi_custom;
-        }
-        if (empty($divisi)) $divisi = null;
 
         $request->validate([
             'nama_lengkap' => 'required|string|max:255',
             'email'        => 'required|email|unique:users,email',
-            'password'     => 'required|string|min:6',
+            'password'     => 'required|string|min:8',
             'role'         => 'required|in:admin,pegawai,pemimpin',
             'jabatan'      => 'nullable|string|max:100',
             'nip'          => 'nullable|string|max:50',
@@ -105,7 +79,6 @@ class UserController extends Controller
             'jabatan'      => $request->jabatan ?: null,
             'nip'          => $request->nip ?: null,
             'nip_bps'      => $request->nip_bps ?: null,
-            'divisi'       => $divisi,
             'is_verified'  => true,
         ]);
 
@@ -116,19 +89,13 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        // Jika pilihan divisi adalah '_custom', ambil dari input teks divisi_custom
-        $divisi = $request->divisi;
-        if ($divisi === '_custom') {
-            $divisi = $request->divisi_custom;
-        }
-        if (empty($divisi)) $divisi = null;
-
         $request->validate([
             'nama_lengkap' => 'required|string|max:255',
             'role'         => 'required|in:admin,pegawai,pemimpin',
             'jabatan'      => 'nullable|string|max:100',
             'nip'          => 'nullable|string|max:50',
             'nip_bps'      => 'nullable|string|max:50',
+            'password'     => 'nullable|string|min:8',
         ]);
 
         $data = [
@@ -137,7 +104,6 @@ class UserController extends Controller
             'jabatan'      => $request->jabatan ?: null,
             'nip'          => $request->nip ?: null,
             'nip_bps'      => $request->nip_bps ?: null,
-            'divisi'       => $divisi,
             'is_verified'  => $request->input('status') === 'Aktif',
         ];
 

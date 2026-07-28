@@ -77,23 +77,32 @@ class PengajuanController extends Controller
             ->when($filterKategori, function ($q) use ($filterKategori) {
                 $q->where('kode_kategori', $filterKategori);
             })
+            ->orderByRaw('CASE WHEN stok_aktual > 0 THEN 1 ELSE 0 END DESC')
             ->orderBy('nama_barang')
             ->get();
 
         $kategoriList = Barang::whereNotNull('kode_kategori')
             ->select('kode_kategori', 'nama_kategori')
             ->distinct()
-            ->orderBy('kode_kategori')
+            ->orderBy('nama_kategori')
             ->get();
+        $divisiList = [
+            'Tim Subbagian Umum', 'Tim Statistik Sosial', 'Tim Statistik Produksi',
+            'Tim Statistik Distribusi', 'Tim Neraca Wilayah dan Analisis Statistik',
+            'Tim Pengolahan dan IT', 'Tim Diseminasi Statistik', 'Tim Reformasi Birokrasi',
+            'Tim Perencanaan dan Administrasi Keuangan', 'Tim Pembinaan dan Pelaksanaan Statistik Sektoral',
+            'Umum Kantor', 'Tim Humas', 'Tim Sensus Ekonomi 2026'
+        ];
 
-        return view('pegawai.katalog', compact('barang', 'search', 'kategoriList', 'filterKategori'));
+        return view('pegawai.katalog', compact('barang', 'search', 'kategoriList', 'filterKategori', 'divisiList'));
     }
 
     public function submitPengajuan(Request $request)
     {
         $request->validate([
-            'items'  => 'required|array|min:1',
-            'alasan' => 'nullable|string|max:500',
+            'items'     => 'required|array|min:1',
+            'tim_kerja' => 'required|string|max:100',
+            'alasan'    => 'nullable|string|max:500',
         ]);
 
         $user = auth()->user();
@@ -127,6 +136,7 @@ class PengajuanController extends Controller
                         'jumlah_diminta'  => $jumlah,
                         'jumlah_disetujui' => $jumlahDisetujui,
                         'status_pengajuan' => $status,
+                        'tim_kerja'       => $request->tim_kerja,
                         'alasan'          => $request->alasan,
                         'waktu_pengajuan' => $waktu,
                         'waktu_diproses'  => $barang->is_auto_approve ? $waktu : null,
@@ -191,7 +201,7 @@ class PengajuanController extends Controller
                 'id_user'          => $p->id_user,
                 'waktu_pengajuan'  => $p->waktu_pengajuan ? $p->waktu_pengajuan->toIso8601String() : null,
                 'nama_lengkap'     => $p->user->nama_lengkap ?? '-',
-                'divisi'           => $p->user->divisi ?? '-',
+                'tim_kerja'        => $p->tim_kerja ?? '-',
                 'nama_barang'      => $p->barang->nama_barang ?? '-',
                 'kode_barang'      => $p->barang->kode_barang ?? null,
                 'kode_kategori'    => $p->barang->kode_kategori ?? null,
@@ -225,7 +235,7 @@ class PengajuanController extends Controller
         $semuaBarang = Barang::with(['pengajuan' => function($q) {
                 $q->whereIn('status_pengajuan', ['approved', 'sebagian']);
             }, 'barangMasuk'])
-            ->orderBy('kode_kategori')
+            ->orderBy('nama_kategori')
             ->orderBy('kode_barang')
             ->get();
 

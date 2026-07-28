@@ -92,20 +92,20 @@
                 Luar biasa! Saat ini tidak ada persediaan barang yang mencapai batas stok kritis.
             </div>
         @else
-            <div style="display:flex; flex-direction:column; gap:15px;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:15px; max-height:350px; overflow-y:auto; padding-right:10px;">
                 @foreach($barangKritis as $item)
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:white; border-radius:10px; border:1px solid #fecaca; flex-wrap:wrap; gap:10px;">
-                    <div>
-                        <h4 style="margin:0 0 4px; color:#7f1d1d; font-size:15px;">{{ $item->nama_barang }}</h4>
+                    <div style="flex: 1; min-width: 150px;">
+                        <h4 style="margin:0 0 4px; color:#7f1d1d; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ $item->nama_barang }}">{{ $item->nama_barang }}</h4>
                         <span style="font-size:12px; color:#64748b;">
                             Kategori: {{ $item->kategori }} | ID: {{ $item->kode }}
                         </span>
                     </div>
                     <div style="display:flex; align-items:center; gap:15px;">
-                        <span style="background:#fef2f2; color:#ef4444; padding:5px 12px; border-radius:6px; font-size:13px; font-weight:bold;">
+                        <span style="background:#fef2f2; color:#ef4444; padding:5px 12px; border-radius:6px; font-size:13px; font-weight:bold; white-space:nowrap;">
                             Stok: {{ $item->stok_aktual }} {{ $item->satuan }}
                         </span>
-                        <span style="color:#94a3b8; font-size:13px;">
+                        <span style="color:#94a3b8; font-size:13px; white-space:nowrap;">
                             Minimum: {{ $item->stok_minimum }}
                         </span>
                     </div>

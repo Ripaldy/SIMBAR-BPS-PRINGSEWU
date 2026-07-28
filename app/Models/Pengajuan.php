@@ -23,6 +23,7 @@ class Pengajuan extends Model
         'catatan_admin',
         'waktu_pengajuan',
         'waktu_diproses',
+        'tim_kerja',
         'diproses_oleh',
     ];
 
