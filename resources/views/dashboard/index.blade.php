@@ -22,10 +22,10 @@
         </div>
         <div class="metric-card">
             <div class="metric-icon" style="background:#fdedec;">
-                <i data-lucide="alert-triangle" style="width:24px;height:24px;color:#e74c3c;"></i>
+                <i data-lucide="message-square" style="width:24px;height:24px;color:#e74c3c;"></i>
             </div>
-            <span class="metric-label">Barang Kritis</span>
-            <h2 class="metric-value" style="color:#e74c3c;">{{ $barangKritis->count() }}</h2>
+            <span class="metric-label">Pemberitahuan Baru</span>
+            <h2 class="metric-value" style="color:#e74c3c;">{{ $pemberitahuanBaru }}</h2>
         </div>
         <div class="metric-card">
             <div class="metric-icon" style="background:#e9f7ef;">

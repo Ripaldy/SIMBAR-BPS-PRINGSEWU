@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PengajuanController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\OtomatisasiController;
+use App\Http\Controllers\PemberitahuanController;
 
 // ======================== AUTH ========================
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -21,6 +22,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
     Route::post('/profil', [ProfilController::class, 'update'])->name('profil.update');
 
+    // Cetak PDF Pengajuan (Bisa diakses pegawai & admin)
+    Route::post('/dashboard/laporan/pengajuan/pdf', [PengajuanController::class, 'downloadPdf'])->name('laporan.pengajuan.pdf');
+
     // ===================== ADMIN & PEMIMPIN =====================
     Route::middleware(['role:admin,pemimpin'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -33,6 +37,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard/aset', [AsetController::class, 'index'])->name('aset.index');
         Route::post('/dashboard/aset', [AsetController::class, 'store'])->name('aset.store');
         Route::post('/dashboard/aset/upload-csv', [AsetController::class, 'uploadCsv'])->name('aset.uploadCsv');
+        Route::post('/dashboard/aset/mass-upload-foto', [AsetController::class, 'massUploadFoto'])->name('aset.massUploadFoto');
         Route::post('/dashboard/aset/{id}/update', [AsetController::class, 'update'])->name('aset.update');
         Route::post('/dashboard/aset/{id}/stock', [AsetController::class, 'addStock'])->name('aset.addStock');
         Route::post('/dashboard/aset/{id}/delete', [AsetController::class, 'destroy'])->name('aset.destroy');
@@ -56,6 +61,11 @@ Route::middleware(['auth'])->group(function () {
         // Otomatisasi
         Route::get('/dashboard/otomatisasi', [OtomatisasiController::class, 'index'])->name('otomatisasi.index');
         Route::post('/dashboard/otomatisasi', [OtomatisasiController::class, 'update'])->name('otomatisasi.update');
+
+        // Pemberitahuan
+        Route::get('/dashboard/pemberitahuan', [PemberitahuanController::class, 'indexAdmin'])->name('admin.pemberitahuan.index');
+        Route::post('/dashboard/pemberitahuan/{id}/read', [PemberitahuanController::class, 'markAsRead'])->name('admin.pemberitahuan.read');
+        Route::delete('/dashboard/pemberitahuan/clear-read', [PemberitahuanController::class, 'clearRead'])->name('admin.pemberitahuan.clearRead');
     });
 
     // ===================== PEGAWAI & PEMIMPIN =====================
@@ -63,5 +73,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/katalog', [PengajuanController::class, 'katalog'])->name('katalog.index');
         Route::post('/katalog/submit', [PengajuanController::class, 'submitPengajuan'])->name('katalog.submit');
         Route::get('/riwayat', [PengajuanController::class, 'riwayat'])->name('riwayat.index');
+
+        // Request Barang Baru
+        Route::get('/request-barang', [PemberitahuanController::class, 'create'])->name('request-barang.create');
+        Route::post('/request-barang', [PemberitahuanController::class, 'store'])->name('request-barang.store');
     });
 });

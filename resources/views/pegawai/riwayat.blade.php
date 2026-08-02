@@ -40,11 +40,12 @@
                         <th style="padding:15px 20px; font-size:11px; color:#64748b; font-weight:bold; text-transform:uppercase; text-align:center; width:100px;">Jumlah Item</th>
                         <th style="padding:15px 20px; font-size:11px; color:#64748b; font-weight:bold; text-transform:uppercase; text-align:center; width:40%;">Alasan / Tujuan</th>
                         <th style="padding:15px 20px; font-size:11px; color:#64748b; font-weight:bold; text-transform:uppercase; text-align:center; width:100px;">Detail</th>
+                        <th style="padding:15px 20px; font-size:11px; color:#64748b; font-weight:bold; text-transform:uppercase; text-align:center; width:100px;">Download</th>
                         <th style="padding:15px 20px; font-size:11px; color:#64748b; font-weight:bold; text-transform:uppercase; text-align:center; width:150px;">Status</th>
                     </tr>
                 </thead>
                 <tbody id="riwayatBody">
-                    <tr><td colspan="5" style="padding:40px; text-align:center; color:#94a3b8; font-size:13px;">Memuat...</td></tr>
+                    <tr><td colspan="6" style="padding:40px; text-align:center; color:#94a3b8; font-size:13px;">Memuat...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -90,6 +91,58 @@
             <div style="padding:25px; overflow-y:auto;" id="detailContent">
                 {{-- Diisi oleh JS --}}
             </div>
+        </div>
+    </div>
+
+    {{-- MODAL PENGATURAN PDF --}}
+    <div id="pdf-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); justify-content:center; align-items:center; z-index:1000; padding:20px;">
+        <div style="background:white; border-radius:16px; width:100%; max-width:500px; padding:0; overflow:hidden; animation:fadeIn 0.2s ease-out; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+            <div style="padding:20px 25px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; color:#1f4068; font-size:16px; display:flex; align-items:center; gap:8px;">
+                    <i data-lucide="file-text" style="width:20px;height:20px;color:#27ae60;"></i> Pengaturan Dokumen PDF
+                </h3>
+                <button type="button" class="modal-close" onclick="closePdfModal()" style="background:none; border:none; cursor:pointer;"><i data-lucide="x" style="width:20px;height:20px;color:#94a3b8;"></i></button>
+            </div>
+            <form action="{{ route('laporan.pengajuan.pdf') }}" method="POST" target="_blank">
+                @csrf
+                <input type="hidden" name="waktu_pengajuan" id="pdf-waktu">
+                <input type="hidden" name="id_user" value="{{ auth()->user()->id_user }}">
+                
+                <div style="padding:25px; display:flex; flex-direction:column; gap:15px;">
+                    <div class="form-group" style="text-align:left;">
+                        <label style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:5px; display:block;">Nama Kasubbag Umum</label>
+                        @php
+                            $kasubbagList = \App\Models\User::whereRaw('LOWER(jabatan) LIKE ?', ['%kepala subbagian umum%'])
+                                                              ->orWhereRaw('LOWER(jabatan) LIKE ?', ['%kasubbag umum%'])
+                                                              ->orWhereRaw('LOWER(jabatan) LIKE ?', ['%kasubag umum%'])
+                                                              ->get();
+                        @endphp
+                        @if($kasubbagList->count() > 0)
+                            <select name="kasubbag" id="pdf-kasubbag" class="form-control" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box; font-family:inherit; cursor:pointer;">
+                                @foreach($kasubbagList as $k)
+                                    <option value="{{ $k->nama_lengkap }}">{{ $k->nama_lengkap }}</option>
+                                @endforeach
+                            </select>
+                        @else
+                            <input type="text" name="kasubbag" id="pdf-kasubbag" class="form-control" placeholder="Ketik Nama Kasubbag Umum..." required style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box; font-family:inherit;">
+                        @endif
+                    </div>
+                    <div class="form-group" style="text-align:left;">
+                        <label style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:5px; display:block;">Nama Penerima (Pemohon)</label>
+                        <input type="text" name="penerima" id="pdf-penerima" value="{{ auth()->user()->nama_lengkap }}" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box; font-family:inherit;">
+                    </div>
+                    <div class="form-group" style="text-align:left;">
+                        <label style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:5px; display:block;">Tim Kerja</label>
+                        <input type="text" name="tim_kerja" id="pdf-timkerja" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box; font-family:inherit;">
+                    </div>
+                </div>
+                <div style="padding:15px 25px; border-top:1px solid #f1f5f9; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc; border-radius:0 0 16px 16px;">
+                    <button type="button" class="btn btn-secondary" onclick="closePdfModal()" style="padding:10px 18px; border-radius:8px; border:1px solid #cbd5e1; background:white; cursor:pointer; font-size:13px; font-weight:bold; font-family:inherit; color:#64748b;">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="padding:10px 18px; border-radius:8px; background:#27ae60; color:white; border:none; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:13px; font-weight:bold; font-family:inherit;" onclick="setTimeout(()=>closePdfModal(), 500)">
+                        <i data-lucide="printer" style="width:16px;height:16px;"></i> Cetak PDF
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -166,7 +219,7 @@ function renderTable() {
     const tbody = document.getElementById('riwayatBody');
 
     if (filteredRiwayat.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="padding:40px; text-align:center; color:#94a3b8; font-size:13px;">Tidak ada riwayat yang sesuai.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="padding:40px; text-align:center; color:#94a3b8; font-size:13px;">Tidak ada riwayat yang sesuai.</td></tr>`;
         document.getElementById('paginationControls').style.display = 'none';
         return;
     }
@@ -185,7 +238,12 @@ function renderTable() {
             <td style="padding:15px 20px; text-align:center; vertical-align:middle;"><strong style="color:#475569; font-size:15px;">${group.jumlah_item}</strong></td>
             <td style="padding:15px 20px; text-align:center; font-size:12px; color:${group.alasan_gabungan==='Tidak ada alasan.'?'#94a3b8':'#475569'}; font-style:${group.alasan_gabungan==='Tidak ada alasan.'?'italic':'normal'}; line-height:1.5; vertical-align:middle;">${group.alasan_gabungan}</td>
             <td style="padding:15px 20px; text-align:center; vertical-align:middle;">
-                <span onclick='openDetail(${JSON.stringify(group)})' style="color:#3498db; font-size:13px; font-weight:bold; cursor:pointer; text-decoration:underline;">Detail</span>
+                <span onclick='openDetailByIndex(${filteredRiwayat.indexOf(group)})' style="color:#3498db;font-size:12px;cursor:pointer;text-decoration:underline;display:inline-flex;align-items:center;gap:4px;">
+                    <i data-lucide="eye" style="width:14px;height:14px;"></i> Detail
+                </span>
+            </td>
+            <td style="padding:15px 20px; text-align:center; vertical-align:middle;">
+                ${group.status_pengajuan !== 'pending' ? `<span onclick='openPdfModalByIndex(${filteredRiwayat.indexOf(group)})' style="color:#27ae60;font-size:12px;cursor:pointer;text-decoration:underline;display:inline-flex;align-items:center;gap:4px;"><i data-lucide="file-text" style="width:14px;height:14px;"></i> PDF</span>` : `<span style="color:#94a3b8; font-size:12px;">-</span>`}
             </td>
             <td style="padding:15px 20px; text-align:center; vertical-align:middle;"><div style="display:flex; justify-content:center; align-items:center;">${badgeHtml}</div></td>
         </tr>`;
@@ -227,7 +285,8 @@ function changeItemsPerPage() {
 }
 
 // Modal Detail Logic
-function openDetail(group) {
+function openDetailByIndex(index) {
+    const group = filteredRiwayat[index];
     let badgeHtml = '';
     if (group.status_pengajuan === 'pending') {
         badgeHtml = `<span style="display:inline-flex; align-items:center; gap:5px; padding:5px 12px; background:#fffbeb; color:#d97706; border-radius:20px; font-size:11px; font-weight:bold;"><i data-lucide="loader" style="width:14px;height:14px;"></i> Diproses</span>`;
@@ -302,6 +361,18 @@ function openDetail(group) {
 
 function closeDetail() {
     document.getElementById('detailModal').style.display = 'none';
+}
+
+function openPdfModalByIndex(index) {
+    const group = filteredRiwayat[index];
+    document.getElementById('pdf-waktu').value = group.waktu_pengajuan;
+    document.getElementById('pdf-timkerja').value = group.items[0]?.tim_kerja || '';
+    document.getElementById('pdf-modal').style.display = 'flex';
+    lucide.createIcons();
+}
+
+function closePdfModal() {
+    document.getElementById('pdf-modal').style.display = 'none';
 }
 
 // init

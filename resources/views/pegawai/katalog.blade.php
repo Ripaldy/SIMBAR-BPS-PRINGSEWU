@@ -195,9 +195,9 @@
                 </select>
             </div>
             <div style="margin-bottom:15px;">
-                <label style="display:block; font-size:12px; color:#475569; font-weight:bold; margin-bottom:8px;">Alasan / Tujuan (Opsional)</label>
-                <textarea id="cart-alasan" rows="2" placeholder="Tulis tujuan penggunaan barang..."
-                    style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px; box-sizing:border-box; outline:none; resize:vertical; font-family:inherit;"></textarea>
+                <label style="display:block; font-size:12px; color:#475569; font-weight:bold; margin-bottom:8px;">Alasan / Tujuan (Wajib)</label>
+                <textarea id="cart-alasan" rows="2" placeholder="Tulis tujuan penggunaan barang (maks 25 kata)..."
+                    style="width:100%; padding:10px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:12px; box-sizing:border-box; outline:none; resize:vertical; font-family:inherit;" required></textarea>
             </div>
             <form method="POST" action="{{ route('katalog.submit') }}" id="submit-form">
                 @csrf
@@ -378,6 +378,11 @@ function submitPengajuan() {
     if (!timKerja) { alert('Silakan pilih Tim Kerja terlebih dahulu.'); return; }
     
     const alasan = document.getElementById('cart-alasan').value.trim();
+    if (!alasan) { alert('Silakan isi Alasan / Tujuan pengajuan terlebih dahulu.'); return; }
+    
+    const wordCount = alasan.split(/\s+/).filter(word => word.length > 0).length;
+    if (wordCount > 25) { alert('Alasan / Tujuan tidak boleh lebih dari 25 kata.'); return; }
+    
     if (Object.keys(cart).length === 0) { alert('Keranjang kosong.'); return; }
 
     const hidden = document.getElementById('form-items-hidden');

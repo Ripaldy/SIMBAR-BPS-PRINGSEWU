@@ -72,6 +72,10 @@
                     <i data-lucide="clock" style="width:20px;height:20px;flex-shrink:0;"></i>
                     <span>Riwayat Laporan</span>
                 </a>
+                <a href="{{ route('admin.pemberitahuan.index') }}" class="nav-item {{ request()->routeIs('admin.pemberitahuan.*') ? 'active' : '' }}">
+                    <i data-lucide="message-square" style="width:20px;height:20px;flex-shrink:0;"></i>
+                    <span>Pemberitahuan</span>
+                </a>
             @elseif(auth()->user()->isPemimpin())
                 <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i data-lucide="home" style="width:20px;height:20px;flex-shrink:0;"></i>
@@ -85,6 +89,10 @@
                     <i data-lucide="list" style="width:20px;height:20px;flex-shrink:0;"></i>
                     <span>Riwayat Pengajuan</span>
                 </a>
+                <a href="{{ route('request-barang.create') }}" class="nav-item {{ request()->routeIs('request-barang.*') ? 'active' : '' }}">
+                    <i data-lucide="help-circle" style="width:20px;height:20px;flex-shrink:0;"></i>
+                    <span>Request Barang</span>
+                </a>
             @elseif(auth()->user()->isPegawai())
                 <a href="{{ route('katalog.index') }}" class="nav-item {{ request()->routeIs('katalog.*') ? 'active' : '' }}">
                     <i data-lucide="shopping-cart" style="width:20px;height:20px;flex-shrink:0;"></i>
@@ -93,6 +101,10 @@
                 <a href="{{ route('riwayat.index') }}" class="nav-item {{ request()->routeIs('riwayat.*') ? 'active' : '' }}">
                     <i data-lucide="list" style="width:20px;height:20px;flex-shrink:0;"></i>
                     <span>Riwayat Pengajuan</span>
+                </a>
+                <a href="{{ route('request-barang.create') }}" class="nav-item {{ request()->routeIs('request-barang.*') ? 'active' : '' }}">
+                    <i data-lucide="help-circle" style="width:20px;height:20px;flex-shrink:0;"></i>
+                    <span>Request Barang</span>
                 </a>
             @endif
         </div>

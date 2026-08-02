@@ -183,6 +183,130 @@ class AsetController extends Controller
         return redirect()->route('aset.index')->with('success', 'Barang berhasil dihapus.');
     }
 
+    public function massUploadFoto(Request $request)
+    {
+        $request->validate([
+            'foto' => 'required|image|max:2048'
+        ]);
+
+        $file = $request->file('foto');
+        // Get original filename without extension (e.g. '000004' from '000004.jpg')
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        
+        $matched = false;
+        $matchedItems = 0;
+
+        // Try exact match on id_barang
+        if (is_numeric($originalName)) {
+            $barang = Barang::where('id_barang', $originalName)->first();
+            if ($barang) {
+                $matched = true;
+                $this->updateBarangFoto($barang, $file);
+                $matchedItems++;
+            }
+        }
+
+        // Try format kode_kategori + kode_barang with separators
+        if (!$matched) {
+            $separator = null;
+            if (str_contains($originalName, '-')) $separator = '-';
+            else if (str_contains($originalName, '_')) $separator = '_';
+            else if (str_contains($originalName, ' ')) $separator = ' ';
+
+            $katPart = null;
+            $barPart = null;
+
+            if ($separator) {
+                $parts = explode($separator, $originalName);
+                if (count($parts) >= 2) {
+                    $katPart = $parts[0];
+                    $barPart = $parts[1];
+                }
+            } else if (is_numeric($originalName) && strlen($originalName) > 6) {
+                // E.g. 11711104000004 -> last 6 is kode_barang
+                $katPart = substr($originalName, 0, -6);
+                $barPart = substr($originalName, -6);
+            }
+
+            if ($katPart && $barPart) {
+                $barang = Barang::where('kode_kategori', $katPart)->where('kode_barang', $barPart)->get();
+                if ($barang->count() > 0) {
+                    $matched = true;
+                    $path = $file->store('', 'uploads');
+                    $filename = basename($path);
+                    foreach ($barang as $b) {
+                        if ($b->foto_barang && $b->foto_barang != $filename) {
+                            @unlink(public_path('uploads/' . $b->foto_barang));
+                        }
+                        $b->foto_barang = $filename;
+                        $b->save();
+                        $matchedItems++;
+                    }
+                }
+            }
+        }
+
+        // Try match kode_barang
+        if (!$matched) {
+            $barang = Barang::where('kode_barang', $originalName)->get();
+            if ($barang->count() > 0) {
+                $matched = true;
+                $path = $file->store('', 'uploads');
+                $filename = basename($path);
+                foreach ($barang as $b) {
+                    if ($b->foto_barang && $b->foto_barang != $filename) {
+                        @unlink(public_path('uploads/' . $b->foto_barang));
+                    }
+                    $b->foto_barang = $filename;
+                    $b->save();
+                    $matchedItems++;
+                }
+            }
+        }
+
+        // Try match nama_barang
+        if (!$matched) {
+            // Check case insensitive
+            $barang = Barang::where('nama_barang', 'ILIKE', $originalName)->get();
+            if ($barang->count() > 0) {
+                $matched = true;
+                $path = $file->store('', 'uploads');
+                $filename = basename($path);
+                foreach ($barang as $b) {
+                    if ($b->foto_barang && $b->foto_barang != $filename) {
+                        @unlink(public_path('uploads/' . $b->foto_barang));
+                    }
+                    $b->foto_barang = $filename;
+                    $b->save();
+                    $matchedItems++;
+                }
+            }
+        }
+
+        if ($matched) {
+            return response()->json([
+                'success' => true,
+                'message' => "Cocok dengan $matchedItems barang",
+                'matched' => $matchedItems
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => "Tidak ada barang yang cocok dengan nama: $originalName"
+            ], 404);
+        }
+    }
+
+    private function updateBarangFoto($barang, $file)
+    {
+        if ($barang->foto_barang) {
+            @unlink(public_path('uploads/' . $barang->foto_barang));
+        }
+        $path = $file->store('', 'uploads');
+        $barang->foto_barang = basename($path);
+        $barang->save();
+    }
+
     // Import CSV/Excel (format BPS baru)
     public function uploadCsv(Request $request)
     {

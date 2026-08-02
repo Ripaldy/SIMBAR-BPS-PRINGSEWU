@@ -7,6 +7,7 @@ use App\Models\Barang;
 use App\Models\Pengajuan;
 use App\Models\User;
 use App\Models\BarangMasuk;
+use App\Models\Pemberitahuan;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -32,12 +33,14 @@ class DashboardController extends Controller
             $barangKritis       = Barang::whereRaw('stok_aktual <= stok_minimum')->where('stok_minimum', '>', 0)->get();
             $totalDisetujui     = Pengajuan::where('status_pengajuan', 'approved')->count();
             $totalPengguna      = User::count();
+            $pemberitahuanBaru  = Pemberitahuan::where('status', 'unread')->count();
 
             return view('pemimpin.index', compact(
                 'user',
                 'totalBarang',
                 'permintaanTertunda',
                 'barangKritis',
+                'pemberitahuanBaru',
                 'totalDisetujui',
                 'totalPengguna',
                 'dataTren',
@@ -55,6 +58,7 @@ class DashboardController extends Controller
         $permintaanTertunda = Pengajuan::where('status_pengajuan', 'pending')->count();
         $totalPengguna      = User::count();
         $barangKritis       = Barang::whereRaw('stok_aktual <= stok_minimum')->where('stok_minimum', '>', 0)->get();
+        $pemberitahuanBaru  = Pemberitahuan::where('status', 'unread')->count();
 
         return view('dashboard.index', compact(
             'user',
@@ -62,6 +66,7 @@ class DashboardController extends Controller
             'permintaanTertunda',
             'totalPengguna',
             'barangKritis',
+            'pemberitahuanBaru',
             'dataTren',
             'dataTrenMasuk',
             'dataKategori',

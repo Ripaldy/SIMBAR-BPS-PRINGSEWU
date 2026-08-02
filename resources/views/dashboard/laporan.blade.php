@@ -296,6 +296,58 @@
     </div>
 </div>
 
+{{-- ===== MODAL PENGATURAN PDF ===== --}}
+<div class="modal-overlay" id="pdf-modal">
+    <div class="modal" style="max-width:500px; padding:0; overflow:hidden;">
+        <div style="padding:20px 25px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; color:#1f4068; font-size:16px; display:flex; align-items:center; gap:8px;">
+                <i data-lucide="file-text" style="width:20px;height:20px;color:#27ae60;"></i> Pengaturan Dokumen PDF
+            </h3>
+            <button type="button" class="modal-close" onclick="closeModal('pdf-modal')"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
+        </div>
+        <form action="{{ route('laporan.pengajuan.pdf') }}" method="POST" target="_blank">
+            @csrf
+            <input type="hidden" name="waktu_pengajuan" id="pdf-waktu">
+            <input type="hidden" name="id_user" id="pdf-user">
+            
+            <div style="padding:25px; display:flex; flex-direction:column; gap:15px;">
+                <div class="form-group">
+                    <label style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:5px; display:block;">Nama Kasubbag Umum</label>
+                    @php
+                        $kasubbagList = \App\Models\User::whereRaw('LOWER(jabatan) LIKE ?', ['%kepala subbagian umum%'])
+                                                          ->orWhereRaw('LOWER(jabatan) LIKE ?', ['%kasubbag umum%'])
+                                                          ->orWhereRaw('LOWER(jabatan) LIKE ?', ['%kasubag umum%'])
+                                                          ->get();
+                    @endphp
+                    @if($kasubbagList->count() > 0)
+                        <select name="kasubbag" id="pdf-kasubbag" class="form-control" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box; font-family:inherit; cursor:pointer;">
+                            @foreach($kasubbagList as $k)
+                                <option value="{{ $k->nama_lengkap }}">{{ $k->nama_lengkap }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="text" name="kasubbag" id="pdf-kasubbag" class="form-control" placeholder="Ketik Nama Kasubbag Umum..." required style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box;">
+                    @endif
+                </div>
+                <div class="form-group">
+                    <label style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:5px; display:block;">Nama Penerima (Pemohon)</label>
+                    <input type="text" name="penerima" id="pdf-penerima" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box;">
+                </div>
+                <div class="form-group">
+                    <label style="font-size:12px; color:#64748b; font-weight:bold; margin-bottom:5px; display:block;">Tim Kerja</label>
+                    <input type="text" name="tim_kerja" id="pdf-timkerja" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box;">
+                </div>
+            </div>
+            <div style="padding:15px 25px; border-top:1px solid #f1f5f9; display:flex; justify-content:flex-end; gap:10px; background:#f8fafc; border-radius:0 0 16px 16px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('pdf-modal')" style="padding:10px 18px; border-radius:8px; border:1px solid #cbd5e1; background:white; cursor:pointer;">Batal</button>
+                <button type="submit" class="btn btn-primary" style="padding:10px 18px; border-radius:8px; background:#27ae60; color:white; border:none; cursor:pointer; display:flex; align-items:center; gap:8px;" onclick="setTimeout(()=>closeModal('pdf-modal'), 500)">
+                    <i data-lucide="printer" style="width:16px;height:16px;"></i> Cetak PDF
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -346,16 +398,13 @@ function buildGrouped(data) {
     const obj = {};
     data.forEach(item => {
         const key = item.waktu_pengajuan + '_' + item.id_user;
-        if (!obj[key]) obj[key] = { id_group: key, waktu_pengajuan: item.waktu_pengajuan, nama_lengkap: item.nama_lengkap, tim_kerja: item.tim_kerja, items: [] };
+        if (!obj[key]) obj[key] = { id_group: key, id_user: item.id_user, waktu_pengajuan: item.waktu_pengajuan, nama_lengkap: item.nama_lengkap, tim_kerja: item.tim_kerja, items: [] };
         obj[key].items.push(item);
     });
     return Object.values(obj).map(g => {
         const items = g.items;
-        let status = 'approved';
-        if (items.some(i => i.status_pengajuan === 'rejected') && items.some(i => i.status_pengajuan === 'approved')) status = 'sebagian';
-        else if (items.every(i => i.status_pengajuan === 'rejected')) status = 'rejected';
         const total = items.reduce((s, i) => s + parseInt(i.jumlah_diminta), 0);
-        return { ...g, status_pengajuan: status, totalItem: total };
+        return { ...g, status_pengajuan: 'approved', totalItem: total };
     }).sort((a,b) => new Date(b.waktu_pengajuan) - new Date(a.waktu_pengajuan));
 }
 
@@ -530,19 +579,16 @@ function renderTable() {
                 <th style="${thGS}width:15%;">Waktu</th>
                 <th style="${thGS}width:20%;">Pemohon</th>
                 <th style="${thGS}width:20%;">Tim Kerja</th>
-                <th style="${thGS}width:15%;">Jumlah Item</th>
-                <th style="${thGS}width:10%;">Detail</th>
+                <th style="${thGS}width:10%;">Jumlah Item</th>
+                <th style="${thGS}width:8%;">Detail</th>
+                <th style="${thGS}width:7%;">Download</th>
                 <th style="${thGS}width:20%;">Status</th>
             </tr></thead><tbody>`;
         if (slice.length === 0) {
-            html += `<tr><td colspan="6" style="padding:40px;color:#94a3b8;font-size:13px;text-align:center;">Tidak ada riwayat ditemukan.</td></tr>`;
+            html += `<tr><td colspan="7" style="padding:40px;color:#94a3b8;font-size:13px;text-align:center;">Tidak ada riwayat ditemukan.</td></tr>`;
         } else {
             slice.forEach(g => {
-                const statusBadge = g.status_pengajuan === 'approved'
-                    ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;background:#ecfdf5;color:#059669;border-radius:20px;font-size:12px;white-space:nowrap;">✓ Selesai Diproses</span>`
-                    : g.status_pengajuan === 'rejected'
-                    ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;background:#fef2f2;color:#dc2626;border-radius:20px;font-size:12px;">✗ Ditolak</span>`
-                    : `<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;background:#fefce8;color:#ca8a04;border-radius:20px;font-size:12px;">~ Sebagian</span>`;
+                const statusBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;background:#ecfdf5;color:#059669;border-radius:20px;font-size:12px;white-space:nowrap;">✓ Selesai Diproses</span>`;
                 const groupJson = JSON.stringify(g).replace(/'/g,"&#39;");
                 html += `<tr style="border-bottom:1px solid #f1f5f9;">
                     <td style="padding:15px 10px;font-size:12px;color:#000;text-align:center;">${fmtWaktu(g.waktu_pengajuan)}</td>
@@ -550,7 +596,14 @@ function renderTable() {
                     <td style="padding:15px 10px;font-size:12px;color:#000;text-align:center;">${g.tim_kerja || '-'}</td>
                     <td style="padding:15px 10px;font-size:12px;color:#000;text-align:center;">${g.totalItem}</td>
                     <td style="padding:15px 10px;text-align:center;vertical-align:middle;">
-                        <span onclick='openDetailModal(${groupJson})' style="color:#3498db;font-size:12px;cursor:pointer;text-decoration:underline;">Detail</span>
+                        <span onclick='openDetailModal(${groupJson})' style="color:#3498db;font-size:12px;cursor:pointer;text-decoration:underline;display:inline-flex;align-items:center;gap:4px;">
+                            <i data-lucide="eye" style="width:14px;height:14px;"></i> Detail
+                        </span>
+                    </td>
+                    <td style="padding:15px 10px;text-align:center;vertical-align:middle;">
+                        <span onclick='openPdfModal("${g.waktu_pengajuan}", "${g.id_user}", "${g.nama_lengkap}", "${g.tim_kerja || ''}")' style="color:#27ae60;font-size:12px;cursor:pointer;text-decoration:underline;display:inline-flex;align-items:center;gap:4px;">
+                            <i data-lucide="file-text" style="width:14px;height:14px;"></i> PDF
+                        </span>
                     </td>
                     <td style="padding:15px 10px;text-align:center;">${statusBadge}</td>
                 </tr>`;
@@ -1664,5 +1717,13 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
 // Init
 renderTable();
 onExportTabelChange();
+function openPdfModal(waktu, id_user, nama_lengkap, tim_kerja) {
+    document.getElementById('pdf-waktu').value = waktu;
+    document.getElementById('pdf-user').value = id_user;
+    document.getElementById('pdf-penerima').value = nama_lengkap;
+    document.getElementById('pdf-timkerja').value = tim_kerja;
+    
+    openModal('pdf-modal');
+}
 </script>
 @endpush

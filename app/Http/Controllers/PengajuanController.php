@@ -7,6 +7,7 @@ use App\Models\Pengajuan;
 use App\Models\Barang;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PengajuanController extends Controller
 {
@@ -178,6 +179,7 @@ class PengajuanController extends Controller
                 'jumlah_disetujui' => $p->jumlah_disetujui,
                 'status_pengajuan' => $p->status_pengajuan,
                 'alasan'           => $p->alasan,
+                'tim_kerja'        => $p->tim_kerja,
             ];
         })->values()->toArray();
 
@@ -299,5 +301,49 @@ class PengajuanController extends Controller
 
         $query->delete();
         return redirect()->route('laporan.index')->with('success', 'Data laporan berhasil dihapus.');
+    }
+
+    public function downloadPdf(Request $request)
+    {
+        $waktu = $request->input('waktu_pengajuan');
+        $idUser = $request->input('id_user');
+        
+        $kasubbag = $request->input('kasubbag') ?? '';
+        $penerima = $request->input('penerima') ?? '';
+        $timKerja = $request->input('tim_kerja') ?? '';
+
+        // Pastikan bukan admin hanya bisa mencetak miliknya sendiri
+        if (auth()->user()->role !== 'admin' && auth()->user()->id_user != $idUser) {
+            abort(403, 'Anda tidak diizinkan mencetak pengajuan ini.');
+        }
+
+        // Ambil data pengajuan untuk grup ini
+        $pengajuan = Pengajuan::with('barang')
+            ->where('waktu_pengajuan', $waktu)
+            ->where('id_user', $idUser)
+            ->whereIn('status_pengajuan', ['approved', 'sebagian'])
+            ->get();
+
+        if ($pengajuan->isEmpty()) {
+            return back()->with('error', 'Data tidak ditemukan.');
+        }
+
+        // Siapkan data untuk view
+        $data = [
+            'pengajuan' => $pengajuan,
+            'kasubbag' => $kasubbag,
+            'penerima' => $penerima,
+            'timKerja' => $timKerja,
+            'waktu' => Carbon::parse($waktu),
+        ];
+
+        $pdf = Pdf::loadView('pdf.permintaan-barang', $data);
+        
+        // Atur ukuran kertas dan orientasi
+        $pdf->setPaper('A4', 'portrait');
+
+        $filename = 'Permintaan_Barang_' . Carbon::parse($waktu)->format('Ymd_His') . '.pdf';
+
+        return $pdf->stream($filename);
     }
 }

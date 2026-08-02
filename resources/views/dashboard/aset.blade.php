@@ -37,6 +37,12 @@
                 <button type="button" onclick="openModal('upload-modal')" class="btn btn-success">
                     <i data-lucide="upload" style="width:16px;height:16px;"></i> Upload Excel
                 </button>
+                
+                <input type="file" id="mass-foto-input" multiple accept="image/*" style="display:none;" onchange="handleMassFotoUpload(event)">
+                <button type="button" class="btn btn-warning" onclick="document.getElementById('mass-foto-input').click()" style="background:#f59e0b; color:white; border:none;">
+                    <i data-lucide="image" style="width:16px;height:16px;"></i> Upload Gambar Barang
+                </button>
+
                 <button type="button" class="btn btn-primary" onclick="openAddModal()">
                     <i data-lucide="plus" style="width:16px;height:16px;"></i> Tambah Manual
                 </button>
@@ -282,6 +288,27 @@
     </div>
 </div>
 
+{{-- MODAL MASS UPLOAD PROGRESS --}}
+<div class="modal-overlay" id="mass-upload-progress-modal">
+    <div class="modal" style="max-width:500px;">
+        <div class="modal-header">
+            <h3>Proses Upload Gambar Massal</h3>
+            <button class="modal-close" onclick="closeModal('mass-upload-progress-modal')" id="mass-upload-close-btn" style="display:none;"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
+        </div>
+        <div style="padding: 20px;">
+            <p id="mass-upload-status" style="margin-bottom:10px; font-weight:bold; color:#1e293b;">Menyiapkan...</p>
+            <div style="width:100%; background:#e2e8f0; border-radius:8px; height:12px; margin-bottom:15px; overflow:hidden;">
+                <div id="mass-upload-progress-bar" style="width:0%; background:#10b981; height:100%; transition:width 0.2s;"></div>
+            </div>
+            <div id="mass-upload-log" style="height:150px; overflow-y:auto; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; font-size:12px; color:#475569; font-family:monospace;">
+            </div>
+            <div style="margin-top:20px; text-align:right;">
+                <button type="button" class="btn btn-primary" onclick="window.location.reload()" id="mass-upload-done-btn" style="display:none;">Selesai & Muat Ulang</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- MODAL TAMBAH STOK --}}
 <div class="modal-overlay" id="stock-modal">
     <div class="modal" style="max-width:380px;">
@@ -433,6 +460,68 @@
             const text = row.innerText.toLowerCase();
             row.style.display = text.includes(input) ? "" : "none";
         });
+    }
+
+    async function handleMassFotoUpload(event) {
+        const files = event.target.files;
+        if (files.length === 0) return;
+
+        openModal('mass-upload-progress-modal');
+        document.getElementById('mass-upload-close-btn').style.display = 'none';
+        document.getElementById('mass-upload-done-btn').style.display = 'none';
+        
+        const statusEl = document.getElementById('mass-upload-status');
+        const progressEl = document.getElementById('mass-upload-progress-bar');
+        const logEl = document.getElementById('mass-upload-log');
+        
+        logEl.innerHTML = '';
+        
+        const total = files.length;
+        let successCount = 0;
+        let failCount = 0;
+
+        for (let i = 0; i < total; i++) {
+            const file = files[i];
+            statusEl.textContent = `Mengunggah ${i + 1} dari ${total}... (${file.name})`;
+            progressEl.style.width = Math.round(((i + 1) / total) * 100) + '%';
+            
+            const formData = new FormData();
+            formData.append('foto', file);
+            formData.append('_token', '{{ csrf_token() }}');
+
+            try {
+                const response = await fetch('{{ route('aset.massUploadFoto') }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    successCount++;
+                    logEl.innerHTML += `<div style="color:#10b981; margin-bottom:4px;">[SUKSES] ${file.name} - ${data.message}</div>`;
+                } else {
+                    failCount++;
+                    logEl.innerHTML += `<div style="color:#ef4444; margin-bottom:4px;">[GAGAL] ${file.name} - ${data.message || 'Tidak cocok'}</div>`;
+                }
+            } catch (error) {
+                failCount++;
+                logEl.innerHTML += `<div style="color:#ef4444; margin-bottom:4px;">[ERROR] ${file.name} - Gagal mengunggah</div>`;
+            }
+
+            // scroll log to bottom
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        statusEl.textContent = `Selesai! Berhasil: ${successCount}, Gagal: ${failCount}`;
+        document.getElementById('mass-upload-close-btn').style.display = 'block';
+        document.getElementById('mass-upload-done-btn').style.display = 'inline-block';
+        
+        // Reset input so they can upload again if needed
+        event.target.value = '';
     }
 </script>
 @endpush
